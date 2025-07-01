@@ -107,22 +107,22 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    subgraph "Frontend Layer"
-        UI[UI Component]
-        Router[Router Component]
-        Store[State Store]
+    subgraph Frontend["前端層"]
+        UI[UI Component<br/>用戶界面組件]
+        Router[Router Component<br/>路由組件]
+        Store[State Store<br/>狀態管理]
     end
     
-    subgraph "Backend Layer"
-        API[REST API Component]
-        Auth[Authentication Service]
-        Logger[Logging Component]
+    subgraph Backend["後端層"]
+        API[REST API Component<br/>REST API 組件]
+        Auth[Authentication Service<br/>認證服務]
+        Logger[Logging Component<br/>日誌組件]
     end
     
-    subgraph "Data Layer"
-        DB[(Database)]
-        Cache[(Redis Cache)]
-        FileStore[File Storage]
+    subgraph DataLayer["資料層"]
+        DB[(Database<br/>資料庫)]
+        Cache[(Redis Cache<br/>快取)]
+        FileStore[File Storage<br/>檔案存儲]
     end
     
     UI --> Router
@@ -136,7 +136,9 @@ flowchart TD
     Auth --> DB
     Logger --> FileStore
     
-    note "依賴關係：前端組件依賴後端 API"
+    style Frontend fill:#e3f2fd
+    style Backend fill:#f3e5f5
+    style DataLayer fill:#e8f5e8
 ```
 
 ### 4. 部署圖（Deployment Diagram）
@@ -202,9 +204,9 @@ flowchart TD
         end
         
         subgraph Content["內容區域"]
-            Chart[圖表組件<br/>- 數據視覺化<br/>- 支援多種圖表類型]
-            Table[表格組件<br/>- 數據列表<br/>- 支援排序和篩選]
-            Filter[篩選器組件<br/>- 日期範圍<br/>- 分類篩選]
+            Chart[圖表組件<br/>數據視覺化<br/>支援多種圖表類型]
+            Table[表格組件<br/>數據列表<br/>支援排序和篩選]
+            Filter[篩選器組件<br/>日期範圍<br/>分類篩選]
         end
         
         subgraph Footer["Footer 部分"]
@@ -218,15 +220,18 @@ flowchart TD
         Database[(資料庫)]
     end
     
-    Filter --> Chart : 篩選數據
-    Filter --> Table : 篩選數據
-    Chart --> API : 請求圖表數據
-    Table --> API : 請求表格數據
-    API --> Database : 查詢數據
-    Controls --> Chart : 控制顯示
-    Controls --> Table : 控制顯示
-    Export --> Table : 匯出數據
-    Export --> Chart : 匯出圖表
+    Filter --> Chart
+    Filter --> Table
+    Chart --> API
+    Table --> API
+    API --> Database
+    Controls --> Chart
+    Controls --> Table
+    Export --> Table
+    Export --> Chart
+    
+    style Dashboard fill:#e3f2fd
+    style External fill:#e8f5e8
 ```
 
 ---
@@ -342,7 +347,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    subgraph "通信圖：訂單處理系統"
+    subgraph System["通信圖：訂單處理系統"]
         Frontend[🖥️ 前端應用<br/>Frontend]
         API[🔧 API 服務<br/>API Service]
         OrderService[📦 訂單服務<br/>Order Service]
@@ -351,16 +356,16 @@ flowchart LR
         NotificationService[📧 通知服務<br/>Notification Service]
     end
     
-    Frontend -->|1. 提交訂單<br/>submitOrder()| API
-    API -->|2. 創建訂單<br/>createOrder()| OrderService
-    OrderService -->|3. 處理支付<br/>processPayment()| PaymentService
-    PaymentService -->|4. 支付確認<br/>paymentConfirmed| OrderService
-    OrderService -->|5. 保存訂單<br/>saveOrder()| Database
-    Database -->|6. 訂單已保存<br/>orderSaved| OrderService
-    OrderService -->|7. 發送通知<br/>sendNotification()| NotificationService
-    NotificationService -->|8. 通知已發送<br/>notificationSent| OrderService
-    OrderService -->|9. 訂單確認<br/>orderConfirmed| API
-    API -->|10. 響應成功<br/>success response| Frontend
+    Frontend -->|1. 提交訂單| API
+    API -->|2. 創建訂單| OrderService
+    OrderService -->|3. 處理支付| PaymentService
+    PaymentService -->|4. 支付確認| OrderService
+    OrderService -->|5. 保存訂單| Database
+    Database -->|6. 訂單已保存| OrderService
+    OrderService -->|7. 發送通知| NotificationService
+    NotificationService -->|8. 通知已發送| OrderService
+    OrderService -->|9. 訂單確認| API
+    API -->|10. 響應成功| Frontend
     
     style Frontend fill:#e1f5fe
     style API fill:#f3e5f5
