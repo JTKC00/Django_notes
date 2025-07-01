@@ -1,0 +1,224 @@
+# Django Testing 詳細筆記
+
+## 1. 簡介
+測試是 Django 項目開發中不可或缺的一部分，它有助於確保代碼按預期運行、及早發現錯誤，並使代碼在未來更易於維護和重構。Django 提供了一個強大的測試框架，基於 Python 的 `unittest` 模塊，專門針對 Web 應用程序的測試需求進行了優化。
+
+**為什麼要測試？**
+- 確保代碼的正確性。
+- 防止回歸錯誤（regression bugs）。
+- 提高代碼質量和可維護性。
+- 促進更好的設計和模塊化。
+
+## 2. 測試類型
+Django 中的測試主要分為兩種類型：
+
+### 2.1 單元測試（Unit Tests）
+- 測試應用程序的個別組件或函數。
+- 通常不依賴於外部資源（如數據庫），運行速度快。
+- **示例**：測試模型方法、工具函數等。
+
+### 2.2 集成測試（Integration Tests）
+- 測試應用程序的不同部分如何協同工作。
+- 可能涉及多個組件和外部資源。
+- **示例**：測試視圖與數據庫的交互、表單提交等。
+
+## 3. 設置測試環境
+### 3.1 測試數據庫
+- Django 自動創建一個單獨的測試數據庫，用於運行測試。
+- 測試數據庫與開發數據庫分開，確保測試不會影響實際數據。
+- 測試結束後，Django 會自動銷毀測試數據庫。
+
+### 3.2 測試配置
+- 可以在 `settings.py` 中設置測試專用的配置，例如：
+  ```python
+  if 'test' in sys.argv:
+      DATABASES['default'] = {
+          'ENGINE': 'django.db.backends.sqlite3',
+          'NAME': ':memory:',
+      }
+  ```
+- 這將使用內存中的 SQLite 數據庫，加快測試速度。
+
+### 3.3 測試運行器
+- Django 使用 `manage.py test` 命令運行測試。
+- 可以指定運行特定應用、測試類或測試方法，例如：
+  ```bash
+  python manage.py test myapp
+  python manage.py test myapp.tests.MyTestCase
+  python manage.py test myapp.tests.MyTestCase.test_method
+  ```
+
+## 4. 編寫測試
+### 4.1 `TestCase` 類
+- Django 的測試基於 `django.test.TestCase`，它繼承自 Python 的 `unittest.TestCase`。
+- 提供了設置和拆除測試的工具，以及針對 Django 組件的斷言。
+- **基本結構**：
+  ```python
+  from django.test import TestCase
+
+  class MyTestCase(TestCase):
+      def setUp(self):
+          # 設置測試數
+          pass
+
+      def test_something(self):
+          # 測試邏輯
+          self.assertEqual(1 + 1, 2)
+  ```
+
+### 4.2 常用斷言
+- `assertEqual(a, b)`：檢查 `a == b`。
+- `assertTrue(x)`：檢查 `x` 為真。
+- `assertFalse(x)`：檢查 `x` 為假。
+- `assertRaises(Exception, func)`：檢查 `func` 引發指定異常。
+- `assertContains(response, text)`：檢查 HTTP 響應中包含指定文本。
+
+### 4.3 測試模型
+- 測試模型方法和屬性。
+- **示例**：
+  ```python
+  class BookModelTest(TestCase):
+      def setUp(self):
+          self.book = Book.objects.create(title="Django Testing", author="John Doe")
+
+      def test_book_str(self):
+          self.assertEqual(str(self.book), "Django Testing by John Doe")
+  ```
+
+### 4.4 測試視圖
+- 使用 `Client` 模擬 HTTP 請求。
+- 測試不同 HTTP 方法和響應。
+- **示例**：
+  ```python
+  from django.test import Client
+
+  class BookViewTest(TestCase):
+      def setUp(self):
+          self.client = Client()
+          self.book = Book.objects.create(title="Django Testing", author="John Doe")
+
+      def test_book_detail_view(self):
+          response = self.client.get(f'/books/{self.book.id}/')
+          self.assertEqual(response.status_code, 200)
+          self.assertContains(response, "Django Testing")
+  ```
+
+### 4.5 測試表單
+- 測試表單的驗證和清理方法。
+- **示例**：
+  ```python
+  from django.test import TestCase
+  from .forms import ContactForm
+
+  class ContactFormTest(TestCase):
+      def test_valid_form(self):
+          data = {'name': 'John', 'email': 'john@example.com', 'message': 'Hello'}
+          form = ContactForm(data)
+          self.assertTrue(form.is_valid())
+
+      def test_invalid_form(self):
+          data = {'name': '', 'email': 'john@example.com', 'message': 'Hello'}
+          form = ContactForm(data)
+          self.assertFalse(form.is_valid())
+  ```
+
+### 4.6 測試 API
+- 如果項目使用 Django REST framework，可以使用 `APIClient` 測試 API 端點。
+- **示例**：
+  ```python
+  from rest_framework.test import APIClient
+
+  class BookAPITest(TestCase):
+      def setUp(self):
+          self.client = APIClient()
+          self.book = Book.objects.create(title="Django Testing", author="John Doe")
+
+      def test_get_book(self):
+          response = self.client.get(f'/api/books/{self.book.id}/')
+          self.assertEqual(response.status_code, 200)
+          self.assertEqual(response.data['title'], "Django Testing")
+  ```
+
+## 5. 數據庫和測試
+### 5.1 事務管理
+- Django 自動在每個測試中創建一個事務，並在測試結束後回滾，確保每個測試的獨立性。
+- 這意味著測試不會在數據庫中留下持久性數據。
+
+### 5.2 測試夾具（Fixtures）
+- 夾具是預定義的數據集，可以在測試開始前加載到測試數據庫中。
+- **創建夾具**：
+  ```bash
+  python manage.py dumpdata myapp --indent 2 > myapp/fixtures/initial_data.json
+  ```
+- **在測試中加載夾具**：
+  ```python
+  class MyTestCase(TestCase):
+      fixtures = ['initial_data.json']
+  ```
+
+## 6. 認證和權限測試
+- 測試用戶登錄、登出和訪問控制。
+- **示例**：
+  ```python
+  from django.contrib.auth.models import User
+
+  class AuthTest(TestCase):
+      def setUp(self):
+          self.client = Client()
+          self.user = User.objects.create_user(username='testuser', password='12345')
+
+      def test_login(self):
+          login = self.client.login(username='testuser', password='12345')
+          self.assertTrue(login)
+
+      def test_protected_view(self):
+          response = self.client.get('/protected/')
+          self.assertEqual(response.status_code, 302)  # 未登錄重定向
+          self.client.login(username='testuser', password='12345')
+          response = self.client.get('/protected/')
+          self.assertEqual(response.status_code, 200)
+  ```
+
+## 7. 運行測試
+- 使用以下命令運行測試：
+  ```bash
+  python manage.py test
+  ```
+- 可以指定應用、測試類或方法：
+  ```bash
+  python manage.py test myapp.tests.MyTestCase.test_method
+  ```
+- 測試輸出將顯示通過、失敗或錯誤的測試數量，以及詳細的錯誤信息。
+
+## 8. 最佳實踐
+- **保持測試小而集中**：每個測試應專注於單一功能。
+- **使用描述性名稱**：測試方法名應清晰描述測試內容。
+- **確保測試獨立**：測試不應依賴於其他測試的狀態。
+- **測試邊界情況**：測試極端輸入和錯誤情況。
+- **定期運行測試**：在開發過程中頻繁運行測試。
+
+## 9. 進階主題
+### 9.1 Mocking
+- 使用 `unittest.mock` 模塊模擬對象或函數，以隔離測試。
+- **示例**：
+  ```python
+  from unittest.mock import patch
+
+  class ExternalServiceTest(TestCase):
+      @patch('myapp.views.requests.get')
+      def test_api_call(self, mock_get):
+          mock_get.return_value.status_code = 200
+          response = self.client.get('/api/')
+          self.assertEqual(response.status_code, 200)
+  ```
+
+### 9.2 第三方測試工具
+- **pytest-django**：一個基於 pytest 的 Django 測試插件，提供更簡潔的語法。
+- **factory_boy**：用於創建測試數據的工廠，替代夾具。
+- **coverage.py**：測量測試覆蓋率，確保代碼被充分測試。
+
+## 10. 資源和進一步學習
+- [Django 官方文檔 - Testing](https://docs.djangoproject.com/en/stable/topics/testing/)
+- [Django REST framework - Testing](https://www.django-rest-framework.org/api-guide/testing/)
+- [pytest-django 文檔](https://pytest-django.readthedocs.io/en/latest/)
+- [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x)：一本深入探討 Django 最佳實踐的書籍。

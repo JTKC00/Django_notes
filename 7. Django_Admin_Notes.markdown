@@ -1,0 +1,114 @@
+# Django Admin 詳細筆記
+
+## 1. 引言
+Django Admin 是 Django 框架的內建管理界面，允許開發者輕鬆管理應用程序的數據。它提供了一個功能強大且可自定義的管理後台，無需編寫額外的代碼即可進行數據的創建、讀取、更新和刪除（CRUD）操作。本筆記將詳細介紹 Django Admin 的配置、使用和自定義方法，幫助您充分利用這一工具。
+
+## 2. 基本配置
+### 2.1 啟用 Admin
+- 在新創建的 Django 項目中，Admin 默認已啟用。
+- 確保 `django.contrib.admin` 在 `settings.py` 的 `INSTALLED_APPS` 中。
+- 運行遷移以創建 Admin 所需的數據庫表：
+  ```
+  python manage.py migrate
+  ```
+
+### 2.2 創建超級用戶
+- 使用以下命令創建一個超級用戶帳戶：
+  ```
+  python manage.py createsuperuser
+  ```
+- 輸入用戶名、電子郵件和密碼。
+- 訪問 Admin 界面：`http://127.0.0.1:8000/admin/`，使用超級用戶憑證登錄。
+
+## 3. 註冊模型
+### 3.1 基本註冊
+- 在應用程序的 `admin.py` 文件中註冊模型。
+- **示例**：
+  ```python
+  from django.contrib import admin
+  from .models import Book
+
+  admin.site.register(Book)
+  ```
+- 這將為 `Book` 模型提供默認的管理界面。
+
+### 3.2 自定義 Admin 類
+- 創建一個繼承自 `admin.ModelAdmin` 的類來自定義模型的管理行為。
+- **示例**：
+  ```python
+  class BookAdmin(admin.ModelAdmin):
+      list_display = ['title', 'author', 'published_date']
+      search_fields = ['title', 'author']
+      list_filter = ['published_date']
+
+  admin.site.register(Book, BookAdmin)
+  ```
+
+## 4. Admin 功能
+### 4.1 列表視圖
+- **list_display**：指定在列表頁面顯示的字段。
+- **search_fields**：啟用搜索功能，指定可搜索的字段。
+- **list_filter**：添加過濾器，允許按指定字段過濾數據。
+- **ordering**：設置默認排序。
+
+### 4.2 詳情視圖
+- **fields**：指定在詳情頁面顯示的字段。
+- **fieldsets**：將字段分組顯示。
+- **readonly_fields**：設置只讀字段。
+
+### 4.3 內聯模型
+- 使用 `InlineModelAdmin` 在父模型的詳情頁面中編輯相關模型。
+- **示例**：
+  ```python
+  class ChapterInline(admin.TabularInline):
+      model = Chapter
+      extra = 1
+
+  class BookAdmin(admin.ModelAdmin):
+      inlines = [ChapterInline]
+  ```
+
+## 5. 自定義 Admin 行為
+### 5.1 覆蓋 Admin 方法
+- 可以覆蓋 `ModelAdmin` 的方法來實現自定義邏輯。
+- **示例**：自定義保存行為
+  ```python
+  def save_model(self, request, obj, form, change):
+      obj.user = request.user
+      super().save_model(request, obj, form, change)
+  ```
+
+### 5.2 自定義 Admin 模板
+- 創建自定義模板來更改 Admin 界面的外觀。
+- 在應用程序的 `templates/admin/` 目錄下創建模板文件。
+- **示例**：自定義變更列表模板
+  ```html
+  {% extends "admin/change_list.html" %}
+  {% block object-tools-items %}
+      <li><a href="{% url 'custom_view' %}">Custom View</a></li>
+      {{ block.super }}
+  {% endblock %}
+  ```
+
+## 6. 安全性
+### 6.1 權限控制
+- Django Admin 自動應用模型的權限設置。
+- 超級用戶擁有所有權限。
+- 普通用戶可以被賦予特定模型的查看、添加、修改和刪除權限。
+
+### 6.2 自定義權限
+- 在模型的 `Meta` 類中定義自定義權限。
+- **示例**：
+  ```python
+  class Meta:
+      permissions = [('can_publish', 'Can Publish Books')]
+  ```
+
+## 7. 最佳實踐
+- **保持 Admin 簡單**：Admin 主要用於數據管理，避免在 Admin 中實現複雜業務邏輯。
+- **自定義顯示**：使用 `list_display` 和 `fields` 來優化數據顯示。
+- **使用過濾和搜索**：提高數據查找效率。
+- **保護敏感數據**：使用 `readonly_fields` 和權限控制保護敏感信息。
+
+## 8. 結語
+Django Admin 是一個強大且靈活的工具，能夠顯著提高開發效率。通過掌握 Admin 的配置和自定義方法，您可以為您的應用程序創建一個功能豐富且易於使用的管理界面。建議結合實踐和 [Django 官方文檔](https://docs.djangoproject.com/en/stable/ref/contrib/admin/) 深入學習。

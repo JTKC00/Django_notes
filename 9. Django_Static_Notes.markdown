@@ -1,0 +1,87 @@
+# Django Static 詳細筆記
+
+## 1. 引言
+在 Django 中，靜態文件（Static Files）是指那些不會隨請求而改變的文件，如 CSS、JavaScript、圖片等。Django 提供了一個強大的系統來管理這些文件，確保它們在開發和生產環境中都能正確加載和使用。本筆記將詳細介紹 Django Static 的配置、管理和使用方法，幫助您全面掌握這一重要概念。
+
+## 2. 靜態文件的基本概念
+- **靜態文件**：不隨請求改變的文件，如樣式表、腳本和媒體文件。
+- **STATIC_URL**：在模板中引用靜態文件的 URL 前綴。
+- **STATIC_ROOT**：收集靜態文件時的目標目錄（用於生產環境）。
+- **STATICFILES_DIRS**：Django 查找靜態文件的額外目錄。
+
+## 3. 配置靜態文件
+### 3.1 設置 `STATIC_URL`
+- 在 `settings.py` 中設置 `STATIC_URL`，默認為 `/static/`。
+- **示例**：
+  ```python
+  STATIC_URL = '/static/'
+  ```
+
+### 3.2 設置 `STATICFILES_DIRS`
+- 定義 Django 查找靜態文件的目錄。
+- **示例**：
+  ```python
+  STATICFILES_DIRS = [
+      BASE_DIR / "static",
+  ]
+  ```
+- 這將告訴 Django 在項目根目錄下的 `static` 文件夾中查找靜態文件。
+
+### 3.3 設置 `STATIC_ROOT`
+- 定義收集靜態文件時的目標目錄。
+- **示例**：
+  ```python
+  STATIC_ROOT = BASE_DIR / "staticfiles"
+  ```
+- 運行 `python manage.py collectstatic` 時，Django 會將所有靜態文件收集到 `STATIC_ROOT` 指定的目錄。
+
+## 4. 在模板中使用靜態文件
+### 4.1 加載 static 標籤
+- 在模板的頂部使用 `{% load static %}` 加載靜態文件標籤。
+- **示例**：
+  ```html
+  {% load static %}
+  ```
+
+### 4.2 引用靜態文件
+- 使用 `{% static "path/to/file" %}` 引用靜態文件。
+- **示例**：
+  ```html
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <script src="{% static 'js/script.js' %}"></script>
+  <img src="{% static 'images/logo.png' %}" alt="Logo">
+  ```
+
+## 5. 靜態文件的管理
+### 5.1 開發環境
+- 在開發環境中，Django 會自動從 `STATICFILES_DIRS` 和各應用的 `static` 目錄中提供靜態文件。
+- 無需運行 `collectstatic`。
+
+### 5.2 生產環境
+- 在生產環境中，需要運行 `python manage.py collectstatic` 將所有靜態文件收集到 `STATIC_ROOT`。
+- 配置 Web 服務器（如 Nginx）從 `STATIC_ROOT` 提供靜態文件。
+
+## 6. 自定義靜態文件查找器
+- Django 使用 `STATICFILES_FINDERS` 來查找靜態文件。
+- 默認查找器包括：
+  - `FileSystemFinder`：查找 `STATICFILES_DIRS` 中的文件。
+  - `AppDirectoriesFinder`：查找各應用 `static` 目錄中的文件。
+- 可以添加自定義查找器以支持其他來源。
+
+## 7. 靜態文件的版本控制
+- 為了避免瀏覽器緩存舊文件，可以使用版本控制。
+- Django 提供 `ManifestStaticFilesStorage` 來自動為文件添加哈希值。
+- **配置**：
+  ```python
+  STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+  ```
+- 運行 `collectstatic` 後，文件將被重命名為帶有哈希的文件名。
+
+## 8. 最佳實踐
+- **組織靜態文件**：在每個應用中創建 `static` 目錄，並按類型（如 `css`、`js`、`images`）組織文件。
+- **使用相對路徑**：在模板中使用 `{% static %}` 標籤，避免硬編碼 URL。
+- **定期收集靜態文件**：在部署前運行 `collectstatic` 確保所有靜態文件都已收集。
+- **使用 CDN**：在生產環境中，可以將靜態文件上傳到 CDN 以提高加載速度。
+
+## 9. 結語
+Django Static 提供了一個靈活且強大的系統來管理 Web 應用程序中的靜態文件。通過正確配置和使用靜態文件，您可以確保應用程序在開發和生產環境中都能高效運行。建議結合實踐和 [Django 官方文檔](https://docs.djangoproject.com/en/stable/howto/static-files/) 深入學習。

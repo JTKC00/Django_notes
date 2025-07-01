@@ -1,0 +1,167 @@
+# Django Settings 詳細筆記
+
+## 1. Django Settings 簡介
+Django Settings 是用於配置 Django 項目行為的關鍵文件，位於 `settings.py` 中。它控制了項目的各個方面，包括數據庫連接、安裝的應用、中間件、模板引擎等。通過適當配置 Settings，開發者可以確保項目在不同環境下（如開發、測試、生產）正確運行。
+
+## 2. `settings.py` 的結構
+在創建新 Django 項目時，`settings.py` 文件會自動生成，並包含以下主要部分：
+- **Application definition**：定義安裝的應用和中間件。
+- **Database**：配置數據庫連接。
+- **Authentication**：設置認證和授權相關的選項。
+- **Internationalization**：配置語言和時區。
+- **Static files**：管理靜態文件和媒體文件。
+
+## 3. 關鍵設置
+### 3.1 `DEBUG`
+- **作用**：控制是否啟用調試模式。
+- **開發環境**：設置為 `True`，以顯示詳細錯誤信息。
+- **生產環境**：設置為 `False`，以隱藏敏感信息並提高安全性。
+- **重要性**：在生產環境中，`DEBUG` 必須為 `False`，否則可能洩露敏感數據。
+
+### 3.2 `ALLOWED_HOSTS`
+- **作用**：指定允許訪問項目的主機/域名列表。
+- **生產環境**：必須設置為項目的實際域名，以防止 HTTP Host 頭攻擊。
+- **示例**：
+  ```python
+  ALLOWED_HOSTS = ['example.com', 'www.example.com']
+  ```
+
+### 3.3 `INSTALLED_APPS`
+- **作用**：列出項目中啟用的 Django 應用，包括內置和第三方應用。
+- **示例**：
+  ```python
+  INSTALLED_APPS = [
+      'django.contrib.admin',
+      'django.contrib.auth',
+      'myapp',
+  ]
+  ```
+
+### 3.4 `MIDDLEWARE`
+- **作用**：定義中間件的執行順序，處理請求和響應。
+- **示例**：
+  ```python
+  MIDDLEWARE = [
+      'django.middleware.security.SecurityMiddleware',
+      'django.contrib.sessions.middleware.SessionMiddleware',
+      # 其他中間件
+  ]
+  ```
+
+### 3.5 `DATABASES`
+- **作用**：配置數據庫連接。
+- **默認**：使用 SQLite。
+- **其他數據庫**：如 PostgreSQL、MySQL，需設置相應的引擎和連接參數。
+- **示例**（PostgreSQL）：
+  ```python
+  DATABASES = {
+      'default': {
+          'ENGINE': 'django.db.backends.postgresql',
+          'NAME': 'mydatabase',
+          'USER': 'myuser',
+          'PASSWORD': 'mypassword',
+          'HOST': 'localhost',
+          'PORT': '5432',
+      }
+  }
+  ```
+
+### 3.6 `TEMPLATES`
+- **作用**：配置模板引擎，包括模板加載器和上下文處理器。
+- **示例**：
+  ```python
+  TEMPLATES = [
+      {
+          'BACKEND': 'django.template.backends.django.DjangoTemplates',
+          'DIRS': [BASE_DIR / 'templates'],
+          'APP_DIRS': True,
+          'OPTIONS': {
+              'context_processors': [
+                  'django.template.context_processors.debug',
+                  'django.template.context_processors.request',
+                  # 其他上下文處理器
+              ],
+          },
+      },
+  ]
+  ```
+
+### 3.7 `STATIC_URL` 和 `STATIC_ROOT`
+- **作用**：管理靜態文件（如 CSS、JavaScript、圖片）。
+- **`STATIC_URL`**：靜態文件的 URL 前綴。
+- **`STATIC_ROOT`**：收集靜態文件時的目標目錄（生產環境）。
+- **示例**：
+  ```python
+  STATIC_URL = '/static/'
+  STATIC_ROOT = BASE_DIR / 'staticfiles'
+  ```
+
+### 3.8 `MEDIA_URL` 和 `MEDIA_ROOT`
+- **作用**：管理用戶上傳的文件。
+- **`MEDIA_URL`**：媒體文件的 URL 前綴。
+- **`MEDIA_ROOT`**：媒體文件的存儲目錄。
+- **示例**：
+  ```python
+  MEDIA_URL = '/media/'
+  MEDIA_ROOT = BASE_DIR / 'media'
+  ```
+
+## 4. 環境特定設置
+- **開發、測試、生產環境**：建議使用環境變量或多個設置文件來管理不同環境的配置。
+- **示例**：使用 `django-environ` 包從 `.env` 文件讀取環境變量。
+- **最佳實踐**：將敏感信息（如數據庫密碼）存儲在環境變量中。
+
+## 5. 安全性設置
+### 5.1 `SECRET_KEY`
+- **作用**：用於加密會話、密碼等敏感數據。
+- **重要性**：必須保密，切勿在代碼中硬編碼或公開。
+
+### 5.2 `SECURE_SSL_REDIRECT`
+- **作用**：在生產環境中將所有 HTTP 請求重定向到 HTTPS。
+- **示例**：
+  ```python
+  SECURE_SSL_REDIRECT = True
+  ```
+
+### 5.3 `CSRF_COOKIE_SECURE` 和 `SESSION_COOKIE_SECURE`
+- **作用**：確保 CSRF 和會話 cookie 僅通過 HTTPS 傳輸。
+- **示例**：
+  ```python
+  CSRF_COOKIE_SECURE = True
+  SESSION_COOKIE_SECURE = True
+  ```
+
+## 6. 國際化和本地化
+### 6.1 `LANGUAGE_CODE`
+- **作用**：設置項目的默認語言。
+- **示例**：
+  ```python
+  LANGUAGE_CODE = 'zh-hant'  # 繁體中文
+  ```
+
+### 6.2 `TIME_ZONE`
+- **作用**：設置項目的時區。
+- **示例**：
+  ```python
+  TIME_ZONE = 'Asia/Taipei'
+  ```
+
+## 7. 自定義設置
+- 開發者可以在 `settings.py` 中定義自定義設置，以滿足項目特定需求。
+- **示例**：
+  ```python
+  MY_CUSTOM_SETTING = 'some_value'
+  ```
+
+## 8. 最佳實踐
+- **版本控制**：避免將敏感信息（如 `SECRET_KEY`）提交到版本控制。
+- **模塊化**：將設置拆分為多個文件或使用 `django-environ` 等工具管理。
+- **文檔化**：為自定義設置添加註釋，說明其用途。
+
+## 9. 常見陷阱
+- **忘記在生產環境中更新 `ALLOWED_HOSTS`**：可能導致服務器無法響應請求。
+- **在生產環境中將 `DEBUG` 設置為 `True`**：可能洩露敏感信息。
+- **錯誤配置數據庫**：導致連接失敗或數據丟失。
+
+## 10. 結語
+正確配置 Django Settings 對於項目的安全性、性能和功能至關重要。通過理解和應用上述設置和最佳實踐，您可以構建一個健壯且高效的 Django 應用程序。建議結合 [Django 官方文檔](https://docs.djangoproject.com/en/stable/ref/settings/) 深入學習。

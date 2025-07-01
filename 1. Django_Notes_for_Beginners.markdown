@@ -1,0 +1,112 @@
+# Django 筆記 for 初學者
+
+## 1. Django 簡介
+- **什麼是 Django？**
+  - Django 是一個高級 Python Web 框架，幫助開發者快速構建安全、可維護的網站。
+  - 遵循「模型-視圖-模板」（MVT）模式，強調「不要重複自己」（DRY）。
+- **特點和優勢**
+  - 內置功能豐富（如認證、管理界面）。
+  - 強大的 ORM，支持多種數據庫。
+  - 可擴展，適合大小項目。
+
+## 2. 安裝和設置
+- **安裝 Django**
+  - 使用 pip：`pip install django`
+  - 檢查版本：`django-admin --version`
+- **創建項目**
+  - 命令：`django-admin startproject projectname`
+  - 運行服務器：`python manage.py runserver`
+
+## 3. 模型（Models）
+- **定義模型**
+  - 用類定義數據結構，映射到數據庫。
+  - 示例：
+    ```python
+    from django.db import models
+
+    class Book(models.Model):
+        title = models.CharField(max_length=100)
+        author = models.CharField(max_length=50)
+    ```
+- **數據庫遷移**
+  - 創建遷移：`python manage.py makemigrations`
+  - 應用遷移：`python manage.py migrate`
+
+## 4. 視圖（Views）
+- **函數視圖**
+  - 處理請求並返回響應。
+  - 示例：
+    ```python
+    from django.http import HttpResponse
+
+    def hello(request):
+        return HttpResponse("Hello, World!")
+    ```
+- **類視圖**
+  - 用於更複雜邏輯。
+
+## 5. 模板（Templates）
+- **模板語言**
+  - 使用 `{{ variable }}` 和 `{% tag %}`。
+  - 示例：
+    ```html
+    <h1>{{ book.title }}</h1>
+    ```
+- **模板繼承**
+  - 使用 `{% extends "base.html" %}` 和 `{% block %}`。
+
+## 6. URL 路由
+- **定義 URL**
+  - 在 `urls.py` 中映射 URL 到視圖。
+  - 示例：
+    ```python
+    from django.urls import path
+    from . import views
+
+    urlpatterns = [
+        path('hello/', views.hello),
+    ]
+    ```
+
+## 7. 表單（Forms）
+- **創建表單**
+  - 示例：
+    ```python
+    from django import forms
+
+    class ContactForm(forms.Form):
+        name = forms.CharField(max_length=100)
+        email = forms.EmailField()
+    ```
+- **處理提交**
+  - 在視圖中驗證並處理數據。
+
+## 8. 管理員界面（Admin Interface）
+- **配置**
+  - 註冊模型：
+    ```python
+    from django.contrib import admin
+    from .models import Book
+
+    admin.site.register(Book)
+    ```
+
+## 9. 靜態文件和媒體文件
+- **靜態文件**
+  - 配置 `STATIC_URL`，使用 `{% load static %}`。
+- **媒體文件**
+  - 配置 `MEDIA_ROOT`，處理上傳文件。
+
+## 10. 安全性和認證
+- **用戶認證**
+  - 使用 `django.contrib.auth` 實現登錄和權限管理。
+- **安全性**
+  - 防 CSRF：使用 `{% csrf_token %}`。
+
+## 11. 部署
+- **生產環境**
+  - 設置 `DEBUG = False`，使用 Gunicorn 等服務器。
+
+---
+
+這份筆記適合初學者入門，建議搭配實踐學習。

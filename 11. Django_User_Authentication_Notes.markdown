@@ -1,0 +1,128 @@
+# Django User Authentication 詳細筆記
+
+## 1. 引言
+Django 提供了一個強大且靈活的用戶認證系統，允許開發者輕鬆實現用戶註冊、登錄、登出、密碼重置等功能。該系統基於 Django 的 `django.contrib.auth` 模塊，提供了用戶模型、視圖、表單和中間件等組件。本筆記將詳細介紹 Django User Authentication 的配置、使用和自定義方法，幫助您全面掌握這一重要功能。
+
+## 2. 基本配置
+### 2.1 啟用認證系統
+- 在新創建的 Django 項目中，認證系統默認已啟用。
+- 確保 `django.contrib.auth` 和 `django.contrib.contenttypes` 在 `settings.py` 的 `INSTALLED_APPS` 中。
+- 運行遷移以創建認證系統所需的數據庫表：
+  ```
+  python manage.py migrate
+  ```
+
+### 2.2 默認用戶模型
+- Django 提供了一個內置的 `User` 模型，位於 `django.contrib.auth.models`。
+- `User` 模型包含以下字段：
+  - `username`：用戶名。
+  - `password`：密碼（存儲為哈希值）。
+  - `email`：電子郵件地址。
+  - `first_name` 和 `last_name`：名字和姓氏。
+  - `is_staff`：是否為管理員。
+  - `is_active`：帳戶是否激活。
+  - `is_superuser`：是否為超級用戶。
+- 您可以通過自定義用戶模型來擴展或修改這些字段。
+
+## 3. 用戶管理
+### 3.1 創建用戶
+- 使用 `User.objects.create_user()` 創建普通用戶：
+  ```python
+  from django.contrib.auth.models import User
+  user = User.objects.create_user(username='john', email='john@example.com', password='password')
+  ```
+- 使用 `User.objects.create_superuser()` 創建超級用戶：
+  ```python
+  user = User.objects.create_superuser(username='admin', email='admin@example.com', password='adminpassword')
+  ```
+
+### 3.2 用戶認證
+- 使用 `authenticate()` 函數驗證用戶憑證：
+  ```python
+  from django.contrib.auth import authenticate
+  user = authenticate(username='john', password='password')
+  ```
+- 如果憑證正確，返回 `User` 對象；否則返回 `None`。
+
+### 3.3 登錄和登出
+- 使用 `login()` 函數將用戶登錄到 session：
+  ```python
+  from django.contrib.auth import login
+  login(request, user)
+  ```
+- 使用 `logout()` 函數將用戶登出：
+  ```python
+  from django.contrib.auth import logout
+  logout(request)
+  ```
+
+## 4. 視圖和表單
+### 4.1 內置視圖
+Django 提供了一系列內置的認證視圖，位於 `django.contrib.auth.views`：
+- `LoginView`：處理用戶登錄。
+- `LogoutView`：處理用戶登出。
+- `PasswordChangeView`：允許用戶更改密碼。
+- `PasswordResetView`：處理密碼重置請求。
+- 更多視圖可參考 [官方文檔](https://docs.djangoproject.com/en/stable/topics/auth/default/#module-django.contrib.auth.views)。
+
+### 4.2 表單
+- `AuthenticationForm`：用於用戶登錄。
+- `UserCreationForm`：用於用戶註冊。
+- `PasswordChangeForm`：用於更改密碼。
+- 這些表單可以自定義或直接使用。
+
+## 5. 自定義用戶模型
+### 5.1 為什麼自定義？
+- 默認的 `User` 模型可能無法滿足特定需求，例如使用電子郵件作為用戶名。
+- 自定義用戶模型允許您添加額外字段或更改認證邏輯。
+
+### 5.2 如何自定義
+- 創建一個繼承自 `AbstractUser` 或 `AbstractBaseUser` 的模型。
+- 在 `settings.py` 中設置 `AUTH_USER_MODEL`：
+  ```python
+  AUTH_USER_MODEL = 'myapp.CustomUser'
+  ```
+- **示例**：
+  ```python
+  from django.contrib.auth.models import AbstractUser
+
+  class CustomUser(AbstractUser):
+      date_of_birth = models.DateField(null=True, blank=True)
+  ```
+
+## 6. 權限和授權
+### 6.1 權限系統
+- Django 提供了一個基於角色的權限系統。
+- 每個模型可以有 `add`、`change`、`delete` 和 `view` 權限。
+- 可以使用 `user.has_perm()` 檢查用戶是否擁有特定權限。
+
+### 6.2 組
+- 組是一組權限的集合，可以分配給用戶。
+- 使用 `Group` 模型管理組：
+  ```python
+  from django.contrib.auth.models import Group
+  group = Group.objects.create(name='editors')
+  group.permissions.add(permission)
+  user.groups.add(group)
+  ```
+
+## 7. 安全性
+### 7.1 密碼管理
+- Django 使用 PBKDF2 算法存儲密碼哈希。
+- 可以使用 `check_password()` 驗證密碼：
+  ```python
+  user.check_password('password')
+  ```
+
+### 7.2 CSRF 保護
+- 認證視圖自動包含 CSRF 保護。
+- 在自定義表單中，確保使用 `{% csrf_token %}`。
+
+## 8. 最佳實踐
+- **使用內置視圖和表單**：減少代碼重複，提高安全性。
+- **自定義用戶模型**：在項目早期進行，以避免遷移問題。
+- **權限控制**：細粒度地管理用戶權限，確保數據安全。
+- **定期更新**：保持 Django 和相關包的最新版本，以獲取安全修復。
+
+## 9. 結語
+Django User Authentication 提供了一個功能豐富且安全的用戶管理系統。通過掌握其配置、使用和自定義方法，您可以為您的應用程序構建一個強大且靈活的認證系統。建議結合實踐和 [Django 官方文檔](https://docs.djangoproject.com/en/stable/topics/auth/) 深入學習。

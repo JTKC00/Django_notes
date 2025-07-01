@@ -1,0 +1,204 @@
+# Django Models 詳細筆記
+
+Django Models 是 Django 框架的核心組件之一，負責定義應用程序的數據結構並與數據庫進行交互。通過 Models，開發者可以輕鬆地創建、讀取、更新和刪除數據庫中的數據，無需直接編寫 SQL 語句。本筆記將詳細介紹 Django Models 的各個方面，幫助初學者全面掌握這一重要概念。
+
+## 1. 引言
+
+Django Models 允許開發者使用 Python 類來定義數據模型，這些類會自動映射到數據庫中的表。這種面向對象的方式使得數據管理更加直觀和高效。Models 還提供了豐富的功能，如數據驗證、查詢 API、關係管理等，是構建 Django 應用程序的基石。
+
+## 2. 模型定義
+
+在 Django 中，模型是一個繼承自 `django.db.models.Model` 的 Python 類。每個模型類對應數據庫中的一個表，類的屬性則對應表中的字段。
+
+**示例：**
+```python
+from django.db import models
+
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    author = models.CharField(max_length=50)
+    published_date = models.DateField()
+```
+
+在這個例子中，`Book` 模型有三個字段：`title`、`author` 和 `published_date`，分別對應數據庫表中的列。
+
+## 3. 字段類型
+
+Django 提供了多種字段類型來定義模型字段的數據類型和行為。以下是一些常見的字段類型：
+
+- **`CharField`**：用於存儲字符串，必須指定 `max_length` 參數。
+- **`IntegerField`**：用於存儲整數。
+- **`DateField`**：用於存儲日期。
+- **`ForeignKey`**：用於定義一對多關係。
+- **`ManyToManyField`**：用於定義多對多關係。
+- **`BooleanField`**：用於存儲布爾值。
+- **`TextField`**：用於存儲大量文本。
+- **`EmailField`**：用於存儲電子郵件地址。
+- **`FileField`**：用於文件上傳。
+
+每個字段類型都有自己的參數和驗證邏輯，例如 `CharField` 的 `max_length` 參數用於指定字符串的最大長度。
+
+## 4. 模型實例
+
+模型實例是模型類的對象，代表數據庫中的一行數據。Django 提供了簡單的方法來創建、讀取、更新和刪除（CRUD）模型實例。
+
+**示例：**
+```python
+# 創建實例
+book = Book(title="Django for Beginners", author="William S. Vincent", published_date="2018-01-01")
+book.save()
+
+# 查詢實例
+books = Book.objects.all()
+
+# 更新實例
+book.title = "Django for Professionals"
+book.save()
+
+# 刪除實例
+book.delete()
+```
+
+## 5. 查詢集（QuerySet）
+
+QuerySet 是 Django 提供的一個強大的 API，用於從數據庫中檢索數據。它支持鏈式調用和惰性求值，允許開發者構建複雜的查詢。
+
+**基本使用：**
+```python
+# 獲取所有書籍
+books = Book.objects.all()
+
+# 過濾書籍
+recent_books = Book.objects.filter(published_date__gte="2020-01-01")
+
+# 排序書籍
+ordered_books = Book.objects.order_by("-published_date")
+```
+
+**高級查詢：**
+- **`get()`**：獲取單一匹配的對象。
+- **`exclude()`**：排除符合條件的對象。
+- **`annotate()`**：對查詢集進行聚合。
+- **`select_related()`** 和 **`prefetch_related()`**：優化關聯對象的查詢。
+
+## 6. 模型關係
+
+Django 支持多種模型關係，允許開發者定義複雜的數據結構。
+
+- **一對多關係**：使用 `ForeignKey` 字段。
+  ```python
+  class Author(models.Model):
+      name = models.CharField(max_length=50)
+
+  class Book(models.Model):
+      title = models.CharField(max_length=100)
+      author = models.ForeignKey(Author, on_delete=models.CASCADE)
+  ```
+
+- **多對多關係**：使用 `ManyToManyField` 字段。
+  ```python
+  class Book(models.Model):
+      title = models.CharField(max_length=100)
+      authors = models.ManyToManyField(Author)
+  ```
+
+- **一對一關係**：使用 `OneToOneField` 字段。
+  ```python
+  class AuthorProfile(models.Model):
+      author = models.OneToOneField(Author, on_delete=models.CASCADE)
+      bio = models.TextField()
+  ```
+
+## 7. 模型繼承
+
+Django 支持三種模型繼承類型：
+
+- **抽象基類**：不創建表，僅用於繼承。
+  ```python
+  class BaseModel(models.Model):
+      created_at = models.DateTimeField(auto_now_add=True)
+      class Meta:
+          abstract = True
+
+  class Book(BaseModel):
+      title = models.CharField(max_length=100)
+  ```
+
+- **多表繼承**：每個模型都有自己的表，並通過外鍵關聯。
+  ```python
+  class Person(models.Model):
+      name = models.CharField(max_length=50)
+
+  class Employee(Person):
+      job_title = models.CharField(max_length=50)
+  ```
+
+- **代理模型**：不創建新表，僅改變模型行為。
+  ```python
+  class BookProxy(Book):
+      class Meta:
+          proxy = True
+
+      def custom_method(self):
+          pass
+  ```
+
+## 8. 模型管理器
+
+模型管理器是模型與數據庫之間的接口。默認管理器是 `objects`，但開發者可以自定義管理器以添加自定義查詢方法。
+
+**示例：**
+```python
+class BookManager(models.Manager):
+    def published_after(self, year):
+        return self.filter(published_date__year__gte=year)
+
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    author = models.CharField(max_length=50)
+    published_date = models.DateField()
+    objects = BookManager()
+```
+
+## 9. 數據遷移
+
+Django 使用遷移（migrations）來管理數據庫模式的變化。遷移文件記錄了模型的變化，並可以應用到數據庫中。
+
+**基本命令：**
+- `python manage.py makemigrations`：創建遷移文件。
+- `python manage.py migrate`：應用遷移到數據庫。
+
+## 10. 高級主題
+
+- **字段選項**：
+  - `null`：是否允許數據庫列為 NULL。
+  - `blank`：表單驗證時是否允許為空。
+  - `default`：字段的默認值。
+  - `unique`：是否要求字段值唯一。
+
+- **Meta 類**：用於定義模型的元數據，如表名、索引、排序等。
+  ```python
+  class Book(models.Model):
+      title = models.CharField(max_length=100)
+      class Meta:
+          db_table = 'books'
+          ordering = ['title']
+  ```
+
+- **序列化**：Django 提供了 `serializers` 模塊來序列化和反序列化模型實例。
+
+## 11. 最佳實踐
+
+- **模型設計**：
+  - 保持模型簡單和專注。
+  - 使用有意義的字段名和模型名。
+  - 適當使用關係字段來反映業務邏輯。
+
+- **查詢優化**：
+  - 使用 `select_related()` 和 `prefetch_related()` 減少查詢次數。
+  - 避免在循環中進行數據庫查詢。
+  - 使用索引來加速查詢。
+
+## 結語
+
+Django Models 為開發者提供了一個強大而靈活的工具來管理應用程序的數據。通過掌握 Models 的各個方面，開發者可以構建高效、可維護的 Django 應用程序。建議初學者結合實際項目進行練習，以加深對 Models 的理解和應用。

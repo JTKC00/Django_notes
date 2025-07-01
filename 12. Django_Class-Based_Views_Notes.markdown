@@ -1,0 +1,289 @@
+# Django 類視圖（Class-Based Views, CBV）詳細筆記
+
+## 1. CBV 簡介
+類視圖（Class-Based Views, CBV）是 Django 中用於處理 HTTP 請求的視圖類型，相比於函數視圖（Function-Based Views, FBV），CBV 提供了更高的代碼重用性和結構化。CBV 基於 Python 類，允許開發者利用面向對象的特性，如繼承和 mixin，來構建可重用且易於維護的視圖。
+
+**CBV 的優勢**：
+- **代碼重用**：通過繼承和 mixin 減少重複代碼。
+- **內置通用視圖**：Django 提供了多種通用 CBV，簡化常見任務。
+- **結構化**：將視圖邏輯組織在類中，便於管理複雜邏輯。
+
+## 2. 基本 CBV
+Django 提供了一些基礎的 CBV，用於處理簡單的視圖邏輯。
+
+### 2.1 `View`
+- **描述**：所有 CBV 的基類，負責分發 HTTP 請求到相應的方法（如 `get()`、`post()`）。
+- **示例**：
+  ```python
+  from django.views import View
+  from django.http import HttpResponse
+
+  class HelloWorldView(View):
+      def get(self, request):
+          return HttpResponse("Hello, World!")
+  ```
+- **URL 配置**：
+  ```python
+  from django.urls import path
+  from .views import HelloWorldView
+
+  urlpatterns = [
+      path('hello/', HelloWorldView.as_view()),
+  ]
+  ```
+
+### 2.2 `TemplateView`
+- **描述**：渲染指定模板並返回響應。
+- **示例**：
+  ```python
+  from django.views.generic import TemplateView
+
+  class HomeView(TemplateView):
+      template_name = 'home.html'
+  ```
+- **URL 配置**：
+  ```python
+  path('', HomeView.as_view()),
+  ```
+
+### 2.3 `RedirectView`
+- **描述**：將請求重定向到指定 URL。
+- **示例**：
+  ```python
+  from django.views.generic import RedirectView
+
+  class RedirectToHomeView(RedirectView):
+      url = '/home/'
+  ```
+- **URL 配置**：
+  ```python
+  path('redirect/', RedirectToHomeView.as_view()),
+  ```
+
+## 3. 通用顯示視圖
+用於顯示數據的 CBV，如列表和詳情頁面。
+
+### 3.1 `ListView`
+- **描述**：顯示模型的 QuerySet。
+- **常用屬性**：
+  - `model`：指定模型。
+  - `template_name`：模板名稱。
+  - `context_object_name`：上下文物件的名稱。
+- **示例**：
+  ```python
+  from django.views.generic import ListView
+  from .models import Book
+
+  class BookListView(ListView):
+      model = Book
+      template_name = 'book_list.html'
+      context_object_name = 'books'
+  ```
+
+### 3.2 `DetailView`
+- **描述**：顯示單個對象的詳情。
+- **常用屬性**：
+  - `model`：指定模型。
+  - `template_name`：模板名稱。
+  - `context_object_name`：上下文物件的名稱。
+  - `pk_url_kwarg`：URL 中主鍵的參數名（默認為 'pk'）。
+- **示例**：
+  ```python
+  from django.views.generic import DetailView
+
+  class BookDetailView(DetailView):
+      model = Book
+      template_name = 'book_detail.html'
+      context_object_name = 'book'
+  ```
+- **URL 配置**：
+  ```python
+  path('book/<int:pk>/', BookDetailView.as_view()),
+  ```
+
+## 4. 通用編輯視圖
+用於處理表單和數據操作的 CBV。
+
+### 4.1 `CreateView`
+- **描述**：創建新對象。
+- **常用屬性**：
+  - `model`：指定模型。
+  - `fields`：指定表單字段。
+  - `template_name`：模板名稱。
+  - `success_url`：成功後重定向的 URL。
+- **示例**：
+  ```python
+  from django.views.generic.edit import CreateView
+  from django.urls import reverse_lazy
+
+  class BookCreateView(CreateView):
+      model = Book
+      fields = ['title', 'author', 'published_date']
+      template_name = 'book_form.html'
+      success_url = reverse_lazy('book_list')
+  ```
+
+### 4.2 `UpdateView`
+- **描述**：更新現有對象。
+- **常用屬性**：類似 `CreateView`，但需指定對象。
+- **示例**：
+  ```python
+  class BookUpdateView(UpdateView):
+      model = Book
+      fields = ['title', 'author', 'published_date']
+      template_name = 'book_form.html'
+      success_url = reverse_lazy('book_list')
+  ```
+- **URL 配置**：
+  ```python
+  path('book/<int:pk>/edit/', BookUpdateView.as_view()),
+  ```
+
+### 4.3 `DeleteView`
+- **描述**：刪除對象。
+- **常用屬性**：
+  - `model`：指定模型。
+  - `template_name`：模板名稱。
+  - `success_url`：成功後重定向的 URL。
+- **示例**：
+  ```python
+  class BookDeleteView(DeleteView):
+      model = Book
+      template_name = 'book_confirm_delete.html'
+      success_url = reverse_lazy('book_list')
+  ```
+- **URL 配置**：
+  ```python
+  path('book/<int:pk>/delete/', BookDeleteView.as_view()),
+  ```
+
+### 4.4 `FormView`
+- **描述**：處理表單提交，不綁定模型。
+- **常用屬性**：
+  - `form_class`：表單類。
+  - `template_name`：模板名稱。
+  - `success_url`：成功後重定向的 URL。
+- **示例**：
+  ```python
+  from django.views.generic.edit import FormView
+  from .forms import ContactForm
+
+  class ContactView(FormView $\$$
+      form_class = ContactForm
+      template_name = 'contact.html'
+      success_url = reverse_lazy('contact_success')
+  ```
+
+## 5. 自定義 CBV
+通過繼承 Django 的 CBV 並重寫方法來實現自定義邏輯。
+
+### 5.1 重寫 `get_context_data`
+- **描述**：自定義上下文數據。
+- **示例**：
+  ```python
+  class BookListView(ListView):
+      model = Book
+      def get_context_data(self, **kwargs):
+          context = super().get_context_data(**kwargs)
+          context['total_books'] = Book.objects.count()
+          return context
+  ```
+
+### 5.2 重寫 `get_queryset`
+- **描述**：自定義查詢集。
+- **示例**：
+  ```python
+  class BookListView(ListView):
+      model = Book
+      def get_queryset(self):
+          return Book.objects.filter(published_date__year=2020)
+  ```
+
+## 6. Mixin
+Mixin 是用於擴展 CBV 功能的類，通過多重繼承實現。
+
+### 6.1 內置 Mixin
+- `LoginRequiredMixin`：要求用戶登錄。
+- `PermissionRequiredMixin`：要求用戶具有特定權限。
+- **示例**：
+  ```python
+  from django.contrib.auth.mixins import LoginRequiredMixin
+
+  class SecureView(LoginRequiredMixin, View):
+      def get(self, request):
+          return HttpResponse("Secure content")
+  ```
+
+### 6.2 自定義 Mixin
+- **示例**：創建一個添加額外上下文的 mixin。
+  ```python
+  class ExtraContextMixin:
+      extra_context = {}
+      def get_context_data(self, **kwargs):
+          context = super().get_context_data(**kwargs)
+          context.update(self.extra_context)
+          return context
+  ```
+- **使用**：
+  ```python
+  class MyView(ExtraContextMixin, TemplateView):
+      template_name = 'my_template.html'
+      extra_context = {'title': 'My Page'}
+  ```
+
+## 7. URL 參數和 CBV
+在 CBV 中，URL 參數可以通過 `self.kwargs` 訪問。
+
+- **示例**：
+  ```python
+  class BookDetailView(DetailView):
+      model = Book
+      def get_object(self):
+          return Book.objects.get(pk=self.kwargs['pk'])
+  ```
+- **URL 配置**：
+  ```python
+  path('book/<int:pk>/', BookDetailView.as_view()),
+  ```
+
+## 8. 表單處理
+在 CBV 中處理表單提交時，可以使用 `FormView` 或 `CreateView`/`UpdateView`。
+
+- **示例**（使用 `FormView`）：
+  ```python
+  class ContactView(FormView):
+      form_class = ContactForm
+      template_name = 'contact.html'
+      success_url = reverse_lazy('contact_success')
+
+      def form_valid(self, form):
+          # 處理表單數據
+          form.send_email()
+          return super().form_valid(form)
+  ```
+
+## 9. 認證和權限
+使用 mixin 來控制訪問權限。
+
+- **示例**：
+  ```python
+  from django.contrib.auth.mixins import PermissionRequiredMixin
+
+  class BookUpdateView(PermissionRequiredMixin, UpdateView):
+      model = Book
+      permission_required = 'book.change_book'
+  ```
+
+## 10. 性能和緩存
+- **緩存視圖**：使用 `@method_decorator(cache_page(60 * 15))` 緩存視圖輸出。
+- **數據庫查詢優化**：在 `get_queryset` 中使用 `select_related` 和 `prefetch_related`。
+
+## 11. 最佳實踐
+- **保持視圖簡單**：將複雜邏輯移至模型或服務層。
+- **使用適當的 mixin**：避免過度繼承，保持代碼可讀性。
+- **自定義方法**：僅在必要時重寫方法，充分利用 Django 提供的功能。
+
+## 12. 資源和進一步學習
+- [Django 官方文檔 - Class-based views](https://docs.djangoproject.com/en/stable/topics/class-based-views/)
+- [CCBV - Classy Class-Based Views](https://ccbv.co.uk/)：一個視覺化的 CBV 參考工具。
+- [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x)：一本深入探討 Django 最佳實踐的書籍。

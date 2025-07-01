@@ -1,0 +1,95 @@
+# Django Signal 詳細筆記
+
+## 1. Django Signal 簡介
+- **Signal** 是 Django 提供的消息通知系統，允許在框架中的特定事件發生時觸發自定義操作。
+- **主要用途**：
+  - 解耦應用程式的不同部分。
+  - 執行與事件相關的副作用操作。
+  - 例如，當模型保存時自動創建相關記錄。
+
+## 2. 內建 Signal
+Django 提供了一系列內建 Signal，包括：
+
+### 2.1 模型 Signal
+- **`pre_save`**：在模型保存前觸發。
+- **`post_save`**：在模型保存後觸發。
+- **`pre_delete`**：在模型刪除前觸發。
+- **`post_delete`**：在模型刪除後觸發。
+
+### 2.2 請求 Signal
+- **`request_started`**：請求開始時觸發。
+- **`request_finished`**：請求完成時觸發。
+
+### 2.3 其他 Signal
+- **`m2m_changed`**：多對多關係變更時觸發。
+- **`class_prepared`**：模型類準備好時觸發。
+
+## 3. 使用 Signal
+### 3.1 定義 Signal 接收器
+- **接收器**是一個 Python 函數，當 Signal 發送時執行。
+- **示例**：
+  ```python
+  from django.db.models.signals import post_save
+  from django.dispatch import receiver
+  from .models import MyModel
+
+  @receiver(post_save, sender=MyModel)
+  def my_handler(sender, instance, created, **kwargs):
+      if created:
+          print(f"{instance} was created")
+      else:
+          print(f"{instance} was updated")
+  ```
+
+### 3.2 連接 Signal
+- **方法一**：使用 `@receiver` 裝飾器。
+- **方法二**：在 `ready()` 方法中手動連接。
+  ```python
+  from django.apps import AppConfig
+  from django.db.models.signals import post_save
+
+  class MyAppConfig(AppConfig):
+      def ready(self):
+          from .models import MyModel
+          from .signals import my_handler
+          post_save.connect(my_handler, sender=MyModel)
+  ```
+
+## 4. 自定義 Signal
+- **創建自定義 Signal**：
+  ```python
+  from django.dispatch import Signal
+
+  my_signal = Signal()
+  ```
+- **發送自定義 Signal**：
+  ```python
+  my_signal.send(sender=None, custom_arg="value")
+  ```
+- **連接自定義 Signal**：
+  ```python
+  @receiver(my_signal)
+  def my_custom_handler(sender, custom_arg, **kwargs):
+      print(f"Received custom_arg: {custom_arg}")
+  ```
+
+## 5. Signal 的執行順序
+- Signal 接收器的執行順序不可預測。
+- **建議**：確保接收器不依賴於特定執行順序。
+
+## 6. 最佳實踐
+- **避免在 Signal 中執行耗時操作**：Signal 是同步執行的，可能影響性能。
+- **使用異步任務**：對於耗時操作，考慮使用 Celery 等異步任務隊列。
+- **保持 Signal 接收器簡單**：將複雜邏輯移至其他地方。
+- **註冊 Signal**：在 `apps.py` 的 `ready()` 方法中註冊 Signal，確保應用啟動時正確加載。
+
+## 7. 常見問題
+- **Signal 未觸發**：
+  - 確認 Signal 接收器已正確註冊。
+  - 確認 `sender` 參數正確。
+- **Signal 觸發多次**：
+  - 確認接收器未重複註冊。
+  - 檢查是否有多個進程或線程在運行。
+
+## 8. 結語
+Django Signal 是一個強大的工具，能夠幫助開發者構建鬆耦合、可擴展的應用程式。通過理解和正確使用 Signal，您可以使代碼更具靈活性和可維護性。建議結合 [Django 官方文檔](https://docs.djangoproject.com/en/stable/topics/signals/) 深入學習。

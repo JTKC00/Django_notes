@@ -1,0 +1,41 @@
+# Virtualenvwrapper 筆記
+
+## 1. 簡介
+`virtualenvwrapper` 是一個基於 `virtualenv` 的 Python 工具包，提供了一系列便捷的命令來管理多個虛擬環境。它簡化了虛擬環境的創建、刪除、切換和維護過程，特別適合在開發 Django 或其他 Python 項目時使用。通過 `virtualenvwrapper`，你可以：
+
+- 集中管理所有虛擬環境。
+- 快速切換不同項目的環境。
+- 自動化環境的設置和清理。
+
+## 2. 安裝
+### 2.1 基本安裝
+- 在大多數系統上，可以使用以下命令安裝：
+  ```bash
+  pip install virtualenvwrapper
+  ```
+- Windows 用戶可能需要安裝 `virtualenvwrapper-win`：
+  ```bash
+  pip install virtualenvwrapper-win
+  ```
+
+### 2.2 環境變量設置
+- 安裝後，需設置 `WORKON_HOME` 環境變量，指定虛擬環境的存儲目錄（默認為 `~/.virtualenvs`）。
+- 在 Unix-like 系統（macOS/Linux）中，將以下內容添加到 shell 配置文件（例如 `~/.bashrc` 或 `~/.zshrc`）：
+  ```bash
+  export WORKON_HOME=$HOME/.virtualenvs
+  source /usr/local/bin/virtualenvwrapper.sh
+  ```
+- 在 Windows 中，`virtualenvwrapper-win` 會自動處理配置。
+
+### 2.3 重新加載 shell
+- 執行 `source ~/.bashrc`（或相應的配置文件）以使更改生效。
+
+## 3. 基本使用
+### 3.1 創建虛擬環境
+- 使用 `mkvirtualenv` 創建並自動激活新環境：
+  ```bash
+  mkvirtualenv env_name
+  ```
+
+### 3.2 列出和切換環境
+- 使用 `workon` 列出

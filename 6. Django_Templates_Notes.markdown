@@ -1,0 +1,74 @@
+# Django 模板詳細筆記（繁體中文翻譯）
+
+## 1. 介紹
+Django 模板是 Django 網頁框架的核心組件之一，設計用來產生動態 HTML 頁面。它將呈現層與業務邏輯分離，有助於讓程式碼更乾淨、易於維護。模板結合標準 HTML 與 Django 專屬語法（如模板標籤與過濾器），能有效渲染動態內容。
+
+## 2. 模板語法
+Django 模板語法簡單但功能強大：
+- **變數**：使用雙大括號顯示，例如 `{{ variable }}`。這些變數來自傳遞給模板的 context。
+- **標籤**：用 `{% %}` 包裹，例如 `{% tag %}`，用於處理控制結構（如迴圈、條件判斷）。
+- **過濾器**：用管道符號 `|` 應用，例如 `{{ variable|filter }}`，可改變變數顯示方式（如 `{{ name|lower }}` 轉為小寫）。
+
+## 3. 常用模板標籤
+常見的標籤包括：
+- `{% if %}`：根據布林表達式有條件地渲染內容。
+- `{% for %}`：遍歷列表、查詢集或其他可迭代物件。
+- `{% block %}`：定義可被子模板覆寫的可重用區塊。
+- `{% extends %}`：繼承基礎模板以重用其結構。
+- `{% include %}`：在當前模板中嵌入其他模板。
+
+## 4. 模板繼承
+模板繼承可建立含有共用元素（如頁首、頁尾）的基礎模板，讓子模板擴充：
+- **基礎模板範例**（`base.html`）：
+  ```html
+  <!DOCTYPE html>
+  <html>
+  <body>
+    <header>共用頁首</header>
+    {% block content %}{% endblock %}
+    <footer>共用頁尾</footer>
+  </body>
+  </html>
+  ```
+- **子模板範例**：
+  ```html
+  {% extends "base.html" %}
+  {% block content %}
+    <p>這是獨特內容。</p>
+  {% endblock %}
+  ```
+
+## 5. Context 與 Context Processors
+- **Context（上下文）**：從 view 傳遞給模板的資料字典，用於渲染。
+- **Context Processors（上下文處理器）**：全域性地為 context 加入資料的函式，例如用戶認證資訊，讓所有模板都能存取。
+
+## 6. 模板中的靜態檔案
+要在模板中引用靜態檔案（如 CSS、JavaScript、圖片）：
+- 用 `{% load static %}` 載入 static 標籤。
+- 用 `{% static "路徑/檔案" %}` 引用檔案。例如：
+  ```html
+  {% load static %}
+  <img src="{% static 'images/logo.png' %}" alt="Logo">
+  ```
+
+## 7. 模板過濾器
+過濾器可轉換變數輸出。常見例子：
+- `{{ value|date:"Y-m-d" }}`：格式化日期。
+- `{{ text|default:"N/A" }}`：若變數為空則顯示預設值。
+- 也可自訂過濾器，只需定義 Python 函式並註冊到 Django 模板系統。
+
+## 8. 最佳實踐
+- 保持模板專注於呈現，避免複雜邏輯。
+- 將邏輯交由 view 或自訂模板標籤處理。
+- 善用模板繼承，減少重複並提升一致性。
+
+## 9. 模板除錯
+- 用 `{{ variable|pprint }}` 以可讀格式檢查複雜變數。
+- 在 `settings.py` 設定 `DEBUG = True`，可顯示詳細錯誤頁與堆疊追蹤。
+
+## 10. 國際化
+Django 支援多語言模板：
+- `{% trans "Hello" %}`：標記文字以便翻譯。
+- `{% blocktrans %}Hello, {{ user }}!{% endblocktrans %}`：翻譯含變數的區塊。
+
+本筆記全面介紹 Django 模板，協助初學者建立動態且易維護的網頁。

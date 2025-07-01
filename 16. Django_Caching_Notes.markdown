@@ -1,0 +1,198 @@
+# Django Caching 詳細筆記
+
+## 1. Django Caching 簡介
+- **Caching** 是將計算或查詢結果暫時存儲在快速訪問的儲存區中的技術，以減少重複運算或數據庫查詢的開銷。
+- 在 Django 中，Caching 可用於提高應用程式的響應速度和可擴展性，特別是在處理高流量或數據密集型操作時。
+- **重要性**：通過減少對數據庫的訪問次數，Caching 可以顯著降低伺服器負載並加快頁面加載速度。
+
+## 2. Django Caching 類型
+Django 提供了多種 Caching 策略，以滿足不同的需求：
+
+### 2.1 Per-Site Caching
+- **描述**：對整個網站的響應進行 Caching。
+- **配置**：在 `MIDDLEWARE` 中添加 `UpdateCacheMiddleware` 和 `FetchFromCacheMiddleware`。
+- **適用場景**：適合內容變化不頻繁的網站。
+
+### 2.2 Per-View Caching
+- **描述**：對特定視圖的響應進行 Caching。
+- **配置**：使用 `@cache_page` 裝飾器。
+- **示例**：
+  ```python
+  from django.views.decorators.cache import cache_page
+
+  @cache_page(60 * 15)  # 緩存15分鐘
+  def my_view(request):
+      # 視圖邏輯
+  ```
+
+### 2.3 Template Fragment Caching
+- **描述**：對模板中的特定部分進行 Caching。
+- **配置**：在模板中使用 `{% cache %}` 標籤。
+- **示例**：
+  ```html
+  {% load cache %}
+  {% cache 600 sidebar %}
+      <!-- 緩存的內容 -->
+  {% endcache %}
+  ```
+
+### 2.4 Low-Level Cache API
+- **描述**：手動控制 Caching，例如在模型方法或自定義函數中。
+- **示例**：
+  ```python
+  from django.core.cache import cache
+
+  def get_data():
+      data = cache.get('my_key')
+      if not data:
+          data = expensive_query()
+          cache.set('my_key', data, timeout=60*60)
+      return data
+  ```
+
+## 3. Cache Backends
+Django 支持多種 Cache Backends，每種都有其特點：
+
+### 3.1 Memcached
+- **描述**：高性能的內存 Cache 系統。
+- **配置**：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+          'LOCATION': '127.0.0.1:11211',
+      }
+  }
+  ```
+
+### 3.2 Redis
+- **描述**：支持持久化的內存數據庫。
+- **配置**：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django_redis.cache.RedisCache',
+          'LOCATION': 'redis://127.0.0.1:6379/1',
+          'OPTIONS': {
+              'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+          }
+      }
+  }
+  ```
+
+### 3.3 Local Memory Cache
+- **描述**：簡單的本地內存 Cache，適合開發和測試。
+- **配置**：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+      }
+  }
+  ```
+
+### 3.4 Database Cache
+- **描述**：將 Cache 數據存儲在數據庫中。
+- **配置**：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+          'LOCATION': 'my_cache_table',
+      }
+  }
+  ```
+
+## 4. 配置 Caching
+### 4.1 在 `settings.py` 中配置 Cache Backend
+- 選擇合適的 Cache Backend 並設置 `CACHES`。
+- **示例**（使用 Redis）：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django_redis.cache.RedisCache',
+          'LOCATION': 'redis://127.0.0.1:6379/1',
+          'OPTIONS': {
+              'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+          }
+      }
+  }
+  ```
+
+### 4.2 配置 Cache 中間件（Per-Site Caching）
+- 在 `MIDDLEWARE` 中添加：
+  ```python
+  MIDDLEWARE = [
+      'django.middleware.cache.UpdateCacheMiddleware',
+      # 其他中間件
+      'django.middleware.cache.FetchFromCacheMiddleware',
+  ]
+  ```
+- **注意**：`UpdateCacheMiddleware` 應放在最前面，`FetchFromCacheMiddleware` 應放在最後面。
+
+## 5. Cache Invalidation
+- **問題**：數據更新後，Cache 中的數據可能過時。
+- **策略**：
+  - **自動失效**：設置合適的 Cache 超時時間。
+  - **手動失效**：在數據更新時手動刪除 Cache。
+  - **Cache 版本控制**：使用 Cache 版本來失效特定 Cache。
+
+### 5.1 手動失效 Cache
+- **示例**：
+  ```python
+  from django.core.cache import cache
+
+  cache.delete('my_key')
+  ```
+
+### 5.2 Cache 版本控制
+- **配置**：
+  ```python
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+          'VERSION': 1,
+      }
+  }
+  ```
+- **使用**：
+  ```python
+  cache.set('my_key', 'value', version=2)
+  ```
+
+## 6. 最佳實踐
+- **避免緩存用戶特定數據**：如用戶會話或個人化內容。
+- **設置適當的 Cache 超時**：平衡數據新鮮度和性能。
+- **監控 Cache 命中率**：確保 Cache 有效使用。
+- **使用 Cache 鍵前綴**：避免不同應用間的 Cache 衝突。
+- **測試 Cache 行為**：確保 Cache 在生產環境中按預期工作。
+
+## 7. 進階主題
+### 7.1 Cache 在自定義管理命令中的使用
+- **描述**：在自定義命令中手動操作 Cache。
+- **示例**：
+  ```python
+  from django.core.management.base import BaseCommand
+  from django.core.cache import cache
+
+  class Command(BaseCommand):
+      def handle(self, *args, **options):
+          cache.set('my_key', 'value', 300)
+  ```
+
+### 7.2 Cache 測試
+- **描述**：確保 Cache 在測試中正確配置和使用。
+- **配置**：在測試中設置 `CACHES` 為 `LocMemCache`。
+- **示例**：
+  ```python
+  from django.test import TestCase
+  from django.core.cache import cache
+
+  class CacheTest(TestCase):
+      def test_cache(self):
+          cache.set('test_key', 'test_value')
+          self.assertEqual(cache.get('test_key'), 'test_value')
+  ```
+
+## 8. 結語
+Django Caching 是一個強大的工具，能顯著提升應用程式的性能和可擴展性。通過理解不同類型的 Caching、選擇合適的 Backend 以及遵循最佳實踐，開發者可以構建高效且響應迅速的 Web 應用程式。建議結合 [Django 官方文檔](https://docs.djangoproject.com/en/stable/topics/cache/) 深入學習。
