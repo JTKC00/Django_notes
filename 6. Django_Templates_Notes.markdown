@@ -70,5 +70,3 @@ Django 模板語法簡單但功能強大：
 Django 支援多語言模板：
 - `{% trans "Hello" %}`：標記文字以便翻譯。
 - `{% blocktrans %}Hello, {{ user }}!{% endblocktrans %}`：翻譯含變數的區塊。
-
-本筆記全面介紹 Django 模板，協助初學者建立動態且易維護的網頁。

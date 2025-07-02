@@ -1,0 +1,271 @@
+# Django Messages 詳細筆記
+
+## 1. 什麼是 Django Messages？
+Django 的 Messages Framework 是一個內建的功能，用於在 Web 應用中向用戶顯示一次性通知消息（例如成功、錯誤或警告提示）。這些消息通常在處理表單提交、用戶操作或其他事件後顯示，並在用戶下一次頁面加載時自動清除。
+
+### 主要特點
+- **一次性顯示**：消息在顯示一次後自動從存儲中移除。
+- **靈活存儲**：支持多種後端存儲方式，如 session、cookie 或數據庫。
+- **內建樣式**：提供預定義的消息級別（如成功、錯誤、警告等）。
+- **易於自定義**：支持自定義消息內容、級別和樣式。
+- **跨請求有效**：消息在不同頁面重定向間保持可用。
+
+---
+
+## 2. 配置 Django Messages
+
+### 2.1 檢查 Django 設置
+Django Messages 是 Django 的內建組件，默認已包含在 `INSTALLED_APPS` 中。確保以下設置存在於 `settings.py`：
+
+```python
+INSTALLED_APPS = [
+    ...
+    'django.contrib.messages',
+    ...
+]
+
+MIDDLEWARE = [
+    ...
+    'django.contrib.sessions.middleware.SessionMiddleware',  # 必須包含
+    'django.contrib.messages.middleware.MessageMiddleware',  # Messages 中間件
+    ...
+]
+```
+
+### 2.2 配置消息存儲後端
+Django Messages 默認使用 `SessionStorage`（基於會話的存儲）。可在 `settings.py` 中指定其他後端：
+
+```python
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+```
+
+可用後端：
+- `django.contrib.messages.storage.session.SessionStorage`：存儲在用戶的 session 中（推薦）。
+- `django.contrib.messages.storage.cookie.CookieStorage`：存儲在瀏覽器 cookie 中。
+- `django.contrib.messages.storage.fallback.FallbackStorage`：優先使用 session，失敗則使用 cookie。
+
+### 2.3 配置模板上下文處理器
+為了在模板中訪問消息，確保 `TEMPLATES` 設置包含以下上下文處理器：
+
+```python
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                ...
+                'django.contrib.messages.context_processors.messages',  # 必須包含
+                ...
+            ],
+        },
+    },
+]
+```
+
+---
+
+## 3. 消息級別
+
+Django Messages 提供以下預定義的消息級別（類似日誌級別）：
+
+| 級別          | 常量值 | 描述                     |
+|---------------|--------|--------------------------|
+| DEBUG         | 10     | 開發者調試信息           |
+| INFO          | 20     | 一般信息                 |
+| SUCCESS       | 25     | 成功操作提示             |
+| WARNING       | 30     | 警告信息                 |
+| ERROR         | 40     | 錯誤信息                 |
+
+這些級別可在 `settings.py` 中通過 `MESSAGE_TAGS` 自定義：
+
+```python
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'error',
+}
+```
+
+---
+
+## 4. 在視圖中使用 Messages
+
+### 4.1 基本用法
+在視圖中，使用 `django.contrib.messages` 模塊添加消息：
+
+```python
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
+def my_view(request):
+    if request.method == 'POST':
+        # 處理表單提交
+        messages.success(request, '表單提交成功！')
+        return redirect('success_page')
+    return render(request, 'my_template.html')
+```
+
+### 4.2 添加不同級別的消息
+```python
+messages.debug(request, '這是調試信息')
+messages.info(request, '這是一般信息')
+messages.success(request, '操作成功！')
+messages.warning(request, '請檢查輸入數據')
+messages.error(request, '發生錯誤，請重試')
+```
+
+### 4.3 帶有額外參數的消息
+可以傳遞 `extra_tags` 和 `fail_silently` 參數：
+```python
+messages.success(request, '用戶已保存', extra_tags='alert')
+```
+
+---
+
+## 5. 在模板中顯示 Messages
+
+### 5.1 基本模板代碼
+在模板中使用 `messages` 對象迭代顯示消息：
+
+```html
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+```
+
+- `message.tags`：消息的級別標籤（如 `success`、`error`）。
+- `message`：消息的文本內容。
+
+### 5.2 使用 Bootstrap 樣式
+結合 Bootstrap 顯示更美觀的消息：
+
+```html
+{% if messages %}
+    <div class="container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+```
+
+### 5.3 自定義消息樣式
+在 CSS 中為 `message.tags` 添加樣式：
+
+```css
+.success { color: green; }
+.error { color: red; }
+.warning { color: orange; }
+.info { color: blue; }
+```
+
+---
+
+## 6. 高級功能
+
+### 6.1 自定義消息級別
+創建自定義消息級別：
+
+```python
+from django.contrib.messages import constants as messages
+
+# 在 settings.py 中添加
+MESSAGE_LEVEL = messages.INFO  # 設置最低顯示級別
+MESSAGE_TAGS = {
+    50: 'critical',  # 自定義級別
+}
+
+# 在視圖中使用
+messages.add_message(request, 50, '這是關鍵消息', extra_tags='critical')
+```
+
+### 6.2 手動獲取和清除消息
+可以通過 `get_messages()` 手動操作消息：
+
+```python
+from django.contrib.messages import get_messages
+
+def my_view(request):
+    storage = get_messages(request)
+    for message in storage:
+        print(message)
+    return render(request, 'my_template.html')
+```
+
+### 6.3 防止消息重複
+使用 `messages.get_messages(request)` 檢查現有消息：
+
+```python
+def my_view(request):
+    if not any(msg.message == '表單已提交' for msg in get_messages(request)):
+        messages.success(request, '表單已提交')
+    return render(request, 'my_template.html')
+```
+
+---
+
+## 7. 常見問題與解決方案
+
+### 7.1 消息未顯示
+- **問題**：模板中看不到消息。
+- **解決**：
+  - 確保 `django.contrib.messages.context_processors.messages` 已添加到 `TEMPLATES`。
+  - 檢查是否正確配置了 `MESSAGE_STORAGE`。
+  - 確認視圖中是否正確添加了消息。
+
+### 7.2 消息在重定向後丟失
+- **問題**：重定向後消息未顯示。
+- **解決**：
+  - 確保使用了 `SessionStorage` 或 `FallbackStorage`。
+  - 檢查中間件是否包含 `MessageMiddleware`。
+
+### 7.3 消息顯示多次
+- **問題**：同一消息重複顯示。
+- **解決**：
+  - 檢查視圖邏輯是否多次添加了相同消息。
+  - 在模板中確保消息只迭代一次。
+
+---
+
+## 8. 最佳實踐
+
+1. **統一消息風格**：為不同級別的消息定義一致的 CSS 樣式，提升用戶體驗。
+2. **避免過多消息**：僅在必要時顯示消息，避免信息過載。
+3. **結合重定向**：在表單處理後使用 `redirect` 並顯示消息，遵循 PRG（Post/Redirect/Get）模式。
+4. **記錄關鍵消息**：對於錯誤或警告消息，考慮同時記錄到日誌中。
+5. **測試消息顯示**：在開發環境中測試所有消息級別的顯示效果。
+
+---
+
+## 9. 課程練習
+
+### 練習 1：簡單表單消息
+1. 創建一個表單視圖，處理 POST 請求。
+2. 成功提交後顯示 `成功：表單已保存` 的消息。
+3. 失敗時顯示 `錯誤：請檢查輸入` 的消息。
+4. 在模板中顯示消息，並使用 Bootstrap 樣式。
+
+### 練習 2：自定義消息級別
+1. 在 `settings.py` 中添加一個名為 `CRITICAL` 的自定義消息級別（值為 50）。
+2. 在視圖中添加一個 critical 級別的消息。
+3. 在模板中為 critical 消息添加紅色背景樣式。
+
+---
+
+## 10. 參考資源
+- 官方文檔：https://docs.djangoproject.com/en/stable/ref/contrib/messages/
+- Django 源碼：https://github.com/django/django/tree/main/django/contrib/messages
+- Bootstrap 警報組件：https://getbootstrap.com/docs/5.3/components/alerts/

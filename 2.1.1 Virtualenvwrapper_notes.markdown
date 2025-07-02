@@ -1,41 +1,208 @@
-# Virtualenvwrapper 筆記
+# Virtualenvwrapper 詳細筆記
 
-## 1. 簡介
-`virtualenvwrapper` 是一個基於 `virtualenv` 的 Python 工具包，提供了一系列便捷的命令來管理多個虛擬環境。它簡化了虛擬環境的創建、刪除、切換和維護過程，特別適合在開發 Django 或其他 Python 項目時使用。通過 `virtualenvwrapper`，你可以：
+## 1. 什麼是 virtualenvwrapper？
+virtualenvwrapper 是一個基於 Python 的 virtualenv 工具的擴展包，旨在簡化虛擬環境的管理。它提供了一組便捷的命令行工具，讓開發者可以更高效地創建、切換和刪除虛擬環境。
 
-- 集中管理所有虛擬環境。
-- 快速切換不同項目的環境。
-- 自動化環境的設置和清理。
+### 主要功能
+- **統一管理**：將所有虛擬環境存儲在一個指定的目錄下（如 `~/.virtualenvs`）。
+- **便捷命令**：提供簡單的命令來創建、激活、切換和刪除虛擬環境。
+- **環境隔離**：確保每個項目的 Python 環境和依賴包相互獨立，避免衝突。
+- **自定義腳本**：支持在虛擬環境啟動或退出時運行自定義腳本。
+- **跨平台支持**：適用於 Linux、macOS 和 Windows。
 
-## 2. 安裝
-### 2.1 基本安裝
-- 在大多數系統上，可以使用以下命令安裝：
-  ```bash
-  pip install virtualenvwrapper
-  ```
-- Windows 用戶可能需要安裝 `virtualenvwrapper-win`：
-  ```bash
-  pip install virtualenvwrapper-win
-  ```
+---
 
-### 2.2 環境變量設置
-- 安裝後，需設置 `WORKON_HOME` 環境變量，指定虛擬環境的存儲目錄（默認為 `~/.virtualenvs`）。
-- 在 Unix-like 系統（macOS/Linux）中，將以下內容添加到 shell 配置文件（例如 `~/.bashrc` 或 `~/.zshrc`）：
-  ```bash
-  export WORKON_HOME=$HOME/.virtualenvs
-  source /usr/local/bin/virtualenvwrapper.sh
-  ```
-- 在 Windows 中，`virtualenvwrapper-win` 會自動處理配置。
+## 2. 安裝 virtualenvwrapper
 
-### 2.3 重新加載 shell
-- 執行 `source ~/.bashrc`（或相應的配置文件）以使更改生效。
+### 前提條件
+- 已安裝 Python（建議 3.x 版本）。
+- 已安裝 `pip`。
+- 已安裝 `virtualenv`。
 
-## 3. 基本使用
+### 安裝步驟
+1. **安裝 virtualenv 和 virtualenvwrapper**：
+   ```bash
+   pip install virtualenv virtualenvwrapper
+   ```
+
+2. **配置 virtualenvwrapper**：
+   - 根據操作系統，找到適當的 shell 配置文件（如 `~/.bashrc`、 `~/.zshrc` 或 `~/.bash_profile`）。
+   - 添加以下內容到配置文件：
+     ```bash
+     export WORKON_HOME=$HOME/.virtualenvs  # 指定虛擬環境存儲目錄
+     export PROJECT_HOME=$HOME/Devel        # 可選：指定項目目錄
+     source /usr/local/bin/virtualenvwrapper.sh  # virtualenvwrapper 腳本路徑
+     ```
+   - 保存後，運行以下命令使配置生效：
+     ```bash
+     source ~/.bashrc
+     ```
+
+3. **驗證安裝**：
+   ```bash
+   mkvirtualenv --version
+   ```
+   如果顯示版本信息，則安裝成功。
+
+---
+
+## 3. 常用命令
+
+以下是 virtualenvwrapper 提供的主要命令及其用法：
+
 ### 3.1 創建虛擬環境
-- 使用 `mkvirtualenv` 創建並自動激活新環境：
+```bash
+mkvirtualenv <env_name>
+```
+- 創建一個名為 `<env_name>` 的虛擬環境。
+- 自動激活新創建的環境。
+- 示例：
   ```bash
-  mkvirtualenv env_name
+  mkvirtualenv myproject
   ```
 
-### 3.2 列出和切換環境
-- 使用 `workon` 列出
+### 3.2 激活虛擬環境
+```bash
+workon <env_name>
+```
+- 切換到指定的虛擬環境。
+- 示例：
+  ```bash
+  workon myproject
+  ```
+
+### 3.3 列出所有虛擬環境
+```bash
+lsvirtualenv
+```
+- 顯示所有虛擬環境的列表。
+
+### 3.4 退出當前虛擬環境
+```bash
+deactivate
+```
+- 退出當前的虛擬環境，回到全局 Python 環境。
+
+### 3.5 刪除虛擬環境
+```bash
+rmvirtualenv <env_name>
+```
+- 刪除指定的虛擬環境。
+- 示例：
+  ```bash
+  rmvirtualenv myproject
+  ```
+
+### 3.6 複製虛擬環境
+```bash
+cpvirtualenv <source_env> <new_env>
+```
+- 將現有的虛擬環境複製到一個新環境。
+- 示例：
+  ```bash
+  cpvirtualenv myproject myproject_copy
+  ```
+
+### 3.7 切換到項目目錄
+```bash
+cdproject
+```
+- 自動切換到與當前虛擬環境關聯的項目目錄（需設置 `PROJECT_HOME`）。
+
+### 3.8 顯示虛擬環境詳情
+```bash
+showvirtualenv <env_name>
+```
+- 顯示指定虛擬環境的詳細信息。
+
+---
+
+## 4. 高級功能
+
+### 4.1 自定義腳本
+virtualenvwrapper 支持在虛擬環境啟動或退出時運行自定義腳本，這些腳本位於虛擬環境的 `bin` 目錄下：
+- **`postmkvirtualenv`**：創建虛擬環境後執行。
+- **`preactivate`**：激活虛擬環境前執行。
+- **`postactivate`**：激活虛擬環境後執行。
+- **`predeactivate`**：退出虛擬環境前執行。
+- **`postdeactivate`**：退出虛擬環境後執行。
+
+**示例**：自動設置環境變量
+1. 編輯 `$WORKON_HOME/myproject/bin/postactivate`：
+   ```bash
+   export MY_VAR="Hello, Virtualenv!"
+   ```
+2. 激活環境後，`MY_VAR` 會自動設置。
+
+### 4.2 指定 Python 版本
+創建虛擬環境時，可以指定特定的 Python 版本：
+```bash
+mkvirtualenv -p /usr/bin/python3.8 myproject
+```
+- `-p` 參數指定 Python 解釋器路徑。
+
+### 4.3 安裝特定包
+在創建虛擬環境時，可以指定要安裝的包：
+```bash
+mkvirtualenv --install <package> myproject
+```
+- 示例：
+  ```bash
+  mkvirtualenv --install requests myproject
+  ```
+
+---
+
+## 5. 常見問題與解決方案
+
+### 5.1 命令未找到
+- **問題**：運行 `mkvirtualenv` 時提示命令未找到。
+- **解決**：
+  - 確保 `virtualenvwrapper.sh` 路徑正確。
+  - 檢查是否已執行 `source ~/.bashrc`。
+  - 確認 `pip` 安裝的包是否在系統 PATH 中。
+
+### 5.2 虛擬環境未激活
+- **問題**：激活環境後，提示符未顯示虛擬環境名稱。
+- **解決**：
+  - 確保 `WORKON_HOME` 環境變量正確設置。
+  - 檢查 shell 是否正確加載了 virtualenvwrapper。
+
+### 5.3 依賴衝突
+- **問題**：不同項目間的包版本衝突。
+- **解決**：
+  - 為每個項目創建獨立的虛擬環境。
+  - 使用 `pip freeze > requirements.txt` 記錄依賴，並在其他環境中使用 `pip install -r requirements.txt` 還原。
+
+---
+
+## 6. 最佳實踐
+
+1. **規範命名**：為虛擬環境取有意義的名稱，如項目名稱或功能描述。
+2. **記錄依賴**：定期使用 `pip freeze > requirements.txt` 保存環境的依賴清單。
+3. **清理無用環境**：定期使用 `rmvirtualenv` 刪除不再使用的虛擬環境。
+4. **使用版本控制**：將項目和 `requirements.txt` 提交到 Git，確保環境可重現。
+5. **結合 IDE**：在 PyCharm 或 VSCode 中配置虛擬環境，提升開發效率。
+
+---
+
+## 7. 課程練習
+
+### 練習 1：創建並管理虛擬環境
+1. 安裝 virtualenvwrapper。
+2. 創建一個名為 `test_env` 的虛擬環境。
+3. 安裝 `requests` 包。
+4. 記錄依賴到 `requirements.txt`。
+5. 退出並刪除該虛擬環境。
+
+### 練習 2：自定義腳本
+1. 創建一個虛擬環境 `myapp`。
+2. 添加一個 `postactivate` 腳本，設置環境變量 `APP_ENV=development`。
+3. 激活環境並驗證變量是否生效。
+
+---
+
+## 8. 參考資源
+- 官方文檔：https://virtualenvwrapper.readthedocs.io/
+- virtualenv 官方網站：https://virtualenv.pypa.io/
+- Pip 文檔：https://pip.pypa.io/

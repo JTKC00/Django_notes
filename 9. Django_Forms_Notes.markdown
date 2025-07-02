@@ -76,17 +76,25 @@ def contact_view(request):
 - 使用 `{{ form }}` 渲染整個表單。
 - 或者手動渲染每個字段，如 `{{ form.name }}`。
 
+
 **示例：**
 ```html
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+    <button type="button" onclick="window.location.href='{{ cancel_url }}'">Cancel</button>
 </form>
 ```
 
 - `as_p`：將表單字段包裝在 `<p>` 標籤中。
 - 其他選項：`as_ul`、`as_table`。
+
+> **說明：**
+> - `reset` 按鈕會將表單內容重設為初始值。
+> - `cancel` 按鈕通常用於返回上一頁或跳轉到其他頁面，需在模板上下文提供 `cancel_url`。
+> - `submit` 用於提交表單。
 
 ## 5. 處理表單提交
 ### 5.1 驗證表單數據

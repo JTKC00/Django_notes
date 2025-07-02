@@ -174,5 +174,3 @@ Django 是一個基於 Python 的高級 Web 框架，以其高效、安全和可
   ALLOWED_HOSTS = ['yourdomain.com', '127.0.0.1']
   ```
 
-## 14. 結語
-本筆記詳細介紹了 Django 的安裝與設置流程。通過以上步驟，你可以快速搭建一個 Django 項目並開始開發。建議結合實踐和 [Django 官方文檔](https://docs.djangoproject.com/) 深入學習。
