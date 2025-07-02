@@ -1,0 +1,462 @@
+# Django ORM 詳細筆記
+
+## 課程目標
+- 理解 Django ORM 的基本概念與優勢。
+- 學會使用 Django ORM 進行資料庫操作（CRUD：創建、讀取、更新、刪除）。
+- 掌握進階查詢技巧，如過濾、聚合與關聯查詢。
+- 提供實用範例與問題解析，幫助學員解決實際開發中的問題。
+
+## 筆記結構
+1. **Django ORM 簡介**
+2. **Django ORM 的工作原理**
+3. **基本操作（CRUD）**
+4. **進階查詢技巧**
+5. **常見應用場景與範例**
+6. **最佳實踐與性能優化**
+7. **常見問題與解決方案**
+8. **學習資源與練習建議**
+
+---
+
+## 1. Django ORM 簡介
+
+### 什麼是 Django ORM？
+- **定義**：Django ORM 是 Django 框架提供的物件關聯映射工具，將資料庫表映射為 Python 物件，允許開發者使用 Python 程式碼操作資料庫，而無需直接撰寫 SQL。
+- **優勢**：
+  - **抽象化**：無需深入了解底層資料庫語法（如 MySQL、PostgreSQL）。
+  - **可移植性**：支援多種資料庫，切換資料庫只需更改設置。
+  - **安全性**：自動處理 SQL 注入等安全問題。
+  - **高效開發**：簡化資料庫操作，提高開發效率。
+
+### 與傳統 SQL 的比較
+- **傳統 SQL**：直接撰寫 SQL 語句，靈活但容易出錯，需手動管理資料庫連線。
+- **Django ORM**：使用 Python 物件和方法，語法簡單，自動管理連線與安全性。
+
+### 使用場景
+- 創建與管理資料庫表結構。
+- 執行資料查詢與操作（如篩選、排序、聚合）。
+- 處理模型之間的關聯（如一對多、多對多）。
+
+---
+
+## 2. Django ORM 的工作原理
+
+### 核心組成
+- **模型 (Model)**：定義資料庫表的結構，每個模型類對應一個資料表。
+- **查詢集 (QuerySet)**：表示從資料庫查詢的結果集，支援鏈式操作。
+- **管理器 (Manager)**：每個模型的 `objects` 屬性，負責執行查詢操作。
+- **資料庫配置**：在 `settings.py` 中配置資料庫連線（如 SQLite、PostgreSQL）。
+
+### 工作流程
+1. 定義模型 (`models.py`)，描述資料表結構。
+2. 運行遷移命令 (`makemigrations` 和 `migrate`)，生成或更新資料庫表。
+3. 使用模型的 `objects` 管理器執行查詢或操作。
+4. ORM 將 Python 程式碼轉換為 SQL，與資料庫交互。
+
+### 配置範例
+在 `settings.py` 中配置 PostgreSQL 資料庫：
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydatabase',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+```
+
+---
+
+## 3. 基本操作（CRUD）
+
+### 創建模型
+在 `models.py` 中定義模型：
+```python
+from django.db import models
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+```
+
+**說明**：
+- `CharField` 用於字串，`DecimalField` 用於小數。
+- `auto_now_add=True` 自動記錄創建時間。
+- 運行 `python manage.py makemigrations` 和 `python manage.py migrate` 創建表。
+
+### 創建 (Create)
+```python
+# 方法 1：使用 create()
+Product.objects.create(name="Laptop", price=999.99)
+
+# 方法 2：實例化並保存
+product = Product(name="Phone", price=499.99)
+product.save()
+```
+
+### 讀取 (Read)
+```python
+# 查詢所有記錄
+products = Product.objects.all()
+
+# 查詢單筆記錄
+product = Product.objects.get(id=1)
+
+# 過濾記錄
+cheap_products = Product.objects.filter(price__lt=500)
+```
+
+**注意**：
+- `get()` 返回單一物件，若無匹配或多筆會抛出異常。
+- `filter()` 返回 QuerySet，支援多筆結果。
+
+### 更新 (Update)
+```python
+# 更新單筆
+product = Product.objects.get(id=1)
+product.price = 1099.99
+product.save()
+
+# 批量更新
+Product.objects.filter(price__lt=500).update(price=599.99)
+```
+
+### 刪除 (Delete)
+```python
+# 刪除單筆
+product = Product.objects.get(id=1)
+product.delete()
+
+# 批量刪除
+Product.objects.filter(price__gt=1000).delete()
+```
+
+---
+
+## 4. 進階查詢技巧
+
+### 查詢運算子
+Django 提供多種查詢運算子（Field Lookups）：
+```python
+# 等於
+Product.objects.filter(name="Laptop")
+
+# 大於、小於
+Product.objects.filter(price__gt=500, price__lt=1000)
+
+# 包含（不區分大小寫）
+Product.objects.filter(name__icontains="phone")
+
+# 範圍
+Product.objects.filter(created_at__range=["2025-01-01", "2025-12-31"])
+```
+
+### 排序與分頁
+```python
+# 按價格降序排序
+Product.objects.order_by('-price')
+
+# 按價格升序排序
+Product.objects.order_by('price')
+
+# 分頁（每頁 10 筆）
+products = Product.objects.all()[:10]  # 第一頁
+```
+
+### 聚合查詢
+使用 `aggregate()` 進行統計：
+```python
+from django.db.models import Avg, Sum, Count
+
+# 計算平均價格
+avg_price = Product.objects.aggregate(Avg('price'))
+
+# 計算總數
+total_products = Product.objects.aggregate(Count('id'))
+```
+
+### 關聯查詢
+處理模型間的關聯（如 ForeignKey、ManyToManyField）。
+
+1. **定義關聯模型**：
+```python
+class Category(models.Model):
+    name = models.CharField(max_length=50)
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+```
+
+2. **查詢關聯資料**：
+```python
+# 查詢某分類下的產品
+products = Product.objects.filter(category__name="Electronics")
+
+# 反向查詢
+category = Category.objects.get(name="Electronics")
+products = category.product_set.all()
+```
+
+---
+
+## 5. 常見應用場景與範例
+
+### 範例 1：產品管理系統
+**目標**：實現產品的 CRUD 操作。
+
+1. **模型** (`models.py`)：
+```python
+from django.db import models
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock = models.IntegerField()
+
+    def __str__(self):
+        return self.name
+```
+
+2. **視圖** (`views.py`)：
+```python
+from django.shortcuts import render, redirect
+from .models import Product
+
+def product_list(request):
+    products = Product.objects.all()
+    return render(request, 'products.html', {'products': products})
+
+def add_product(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        price = request.POST.get('price')
+        stock = request.POST.get('stock')
+        Product.objects.create(name=name, price=price, stock=stock)
+        return redirect('product_list')
+    return render(request, 'add_product.html')
+```
+
+3. **模板** (`templates/products.html`)：
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product List</title>
+</head>
+<body>
+    <h1>Products</h1>
+    <a href="{% url 'add_product' %}">Add Product</a>
+    <ul>
+        {% for product in products %}
+            <li>{{ product.name }} - ${{ product.price }} (Stock: {{ product.stock }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+
+4. **模板** (`templates/add_product.html`)：
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Product</title>
+</head>
+<body>
+    <h1>Add Product</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Product Name" required>
+        <input type="number" name="price" placeholder="Price" step="0.01" required>
+        <input type="number" name="stock" placeholder="Stock" required>
+        <button type="submit">Add</button>
+    </form>
+</body>
+</html>
+```
+
+5. **URL 配置** (`urls.py`)：
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('products/', views.product_list, name='product_list'),
+    path('products/add/', views.add_product, name='add_product'),
+]
+```
+
+**說明**：
+- 實現產品列表展示與新增功能。
+- 使用 `redirect` 跳轉到列表頁面。
+
+### 範例 2：分頁與篩選
+**目標**：為產品列表添加分頁與價格篩選。
+
+1. **視圖** (`views.py`)：
+```python
+from django.core.paginator import Paginator
+from django.shortcuts import render
+from .models import Product
+
+def product_list(request):
+    price_filter = request.GET.get('price', '')
+    products = Product.objects.all()
+    
+    if price_filter == 'cheap':
+        products = products.filter(price__lt=500)
+    elif price_filter == 'expensive':
+        products = products.filter(price__gte=500)
+    
+    paginator = Paginator(products, 10)  # 每頁 10 筆
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'products.html', {'page_obj': page_obj})
+```
+
+2. **模板** (`templates/products.html`)：
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product List</title>
+</head>
+<body>
+    <h1>Products</h1>
+    <form method="get">
+        <select name="price">
+            <option value="">All</option>
+            <option value="cheap">Cheap (< $500)</option>
+            <option value="expensive">Expensive (>= $500)</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+    <ul>
+        {% for product in page_obj %}
+            <li>{{ product.name }} - ${{ product.price }}</li>
+        {% endfor %}
+    </ul>
+    <div>
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</body>
+</html>
+```
+
+**說明**：
+- 使用 `Paginator` 實現分頁。
+- 透過 GET 參數實現價格篩選。
+
+---
+
+## 6. 最佳實踐與性能優化
+
+### 最佳實踐
+- **明確查詢**：避免不必要的 `all()`，使用 `filter()` 或 `get()` 精確查詢。
+- **使用索引**：為常用查詢欄位添加資料庫索引（如 `index_together` 或 `db_index`）。
+- **懶惰查詢**：QuerySet 只有在迭代或取值時才執行，善用鏈式操作。
+- **選擇性載入**：使用 `select_related()` 和 `prefetch_related()` 優化關聯查詢。
+
+```python
+# 優化一對多查詢
+products = Product.objects.select_related('category').all()
+
+# 優化多對多查詢
+categories = Category.objects.prefetch_related('product_set').all()
+```
+
+### 性能優化
+- **減少查詢次數**：避免在迴圈中執行查詢。
+```python
+# 低效
+for product in Product.objects.all():
+    print(product.category.name)  # 每次迴圈查詢一次
+
+# 高效
+products = Product.objects.select_related('category').all()
+for product in products:
+    print(product.category.name)  # 一次查詢
+```
+
+- **使用 `values()` 或 `values_list()`**：僅查詢需要的欄位。
+```python
+names = Product.objects.values('name')  # 返回字典列表
+names = Product.objects.values_list('name', flat=True)  # 返回單值列表
+```
+
+- **批量操作**：使用 `bulk_create()` 和 `update()` 處理大量資料。
+```python
+# 批量創建
+Product.objects.bulk_create([
+    Product(name="Item1", price=100),
+    Product(name="Item2", price=200),
+])
+```
+
+---
+
+## 7. 常見問題與解決方案
+
+### 問題 1：DoesNotExist 異常
+**症狀**：`get()` 查詢無結果時抛出異常。
+**解決方案**：
+- 使用 `filter()` 或 `first()` 替代 `get()`。
+- 加入異常處理：
+```python
+try:
+    product = Product.objects.get(id=999)
+except Product.DoesNotExist:
+    product = None
+```
+
+### 問題 2：N+1 查詢問題
+**症狀**：迴圈中查詢關聯資料導致性能下降。
+**解決方案**：
+- 使用 `select_related()` 或 `prefetch_related()` 預載資料。
+- 使用 Django Debug Toolbar 檢查查詢次數。
+
+### 問題 3：遷移失敗
+**症狀**：運行 `migrate` 時報錯。
+**解決方案**：
+- 檢查 `models.py` 是否有語法錯誤。
+- 確保資料庫連線正確（`settings.py`）。
+- 刪除遷移檔案與資料庫，重新運行 `makemigrations` 和 `migrate`。
+
+---
+
+## 8. 學習資源與練習建議
+
+### 推薦資源
+- **官方文件**：Django ORM 官方文檔（https://docs.djangoproject.com/en/stable/topics/db/）。
+- **書籍**：*Two Scoops of Django* by Daniel Roy Greenfeld。
+- **線上課程**：如 Pluralsight 的 Django 課程或 Real Python 的教程。
+- **工具**：Django Debug Toolbar（檢查查詢性能）。
+
+### 練習建議
+1. **基礎練習**：創建一個簡單的圖書管理系統，包含作者與圖書的 CRUD 操作。
+2. **進階挑戰**：實現一個博客系統，支援標籤（多對多）與分類（一對多）查詢。
+3. **專案實戰**：開發一個任務管理應用，包含分頁、篩選與聚合統計。
+4. **性能優化**：使用 Django Debug Toolbar 分析現有專案的查詢性能，並優化 N+1 問題。
+
+---
+
+## 總結
+- **Django ORM 是高效開發的利器**，簡化資料庫操作，適合初學者與進階開發者。
+- **關鍵技能**：掌握模型定義、CRUD 操作、進階查詢與性能優化。
+- **持續學習**：透過實作專案與分析查詢性能，深入理解 ORM 的底層原理。
