@@ -29,6 +29,7 @@
 17. Django_Deployment_Notes.markdown － 部署（Nginx、Gunicorn、CI/CD、備份）
 18. Django_REST_Framework_Notes.markdown － Django REST Framework（序列化、ViewSet、Router）
 19. Django_Extensions_Notes.markdown － Django Extensions（shell_plus、runserver_plus、graph_models 等）
+20. Django_AI_Integration_Notes.markdown － Django AI 整合
 
 ## 使用方式
 

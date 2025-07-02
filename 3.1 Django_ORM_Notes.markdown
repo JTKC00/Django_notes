@@ -142,8 +142,9 @@ Product.objects.filter(price__gt=1000).delete()
 
 ## 4. 進階查詢技巧
 
-### 查詢運算子
-Django 提供多種查詢運算子（Field Lookups）：
+
+### 查詢運算子與進階查詢（Q/F 物件）
+Django 提供多種查詢運算子（Field Lookups），並支援 Q/F 物件進行複雜查詢：
 ```python
 # 等於
 Product.objects.filter(name="Laptop")
@@ -157,6 +158,40 @@ Product.objects.filter(name__icontains="phone")
 # 範圍
 Product.objects.filter(created_at__range=["2025-01-01", "2025-12-31"])
 ```
+
+#### Q 物件：複雜條件查詢（AND/OR/NOT）
+Q 物件允許你用 AND、OR、NOT 組合多個查詢條件。
+```python
+from django.db.models import Q
+
+# OR 查詢：價格小於 500 或名稱包含 phone
+Product.objects.filter(Q(price__lt=500) | Q(name__icontains="phone"))
+
+# AND 查詢：價格大於 100 且庫存大於 10
+Product.objects.filter(Q(price__gt=100) & Q(stock__gt=10))
+
+# NOT 查詢：排除名稱為 Laptop
+Product.objects.filter(~Q(name="Laptop"))
+```
+
+#### F 物件：欄位間比較與原子操作
+F 物件允許你在查詢或更新時直接比較/操作資料庫中的欄位值。
+```python
+from django.db.models import F
+
+# 查詢：價格大於庫存數量
+Product.objects.filter(price__gt=F('stock'))
+
+# 原子更新：將庫存加 5（避免 race condition）
+Product.objects.filter(id=1).update(stock=F('stock') + 5)
+
+# 欄位間運算：查詢價格等於庫存*10 的產品
+Product.objects.filter(price=F('stock') * 10)
+```
+
+> **說明：**
+> - Q 物件適合複雜邏輯組合查詢。
+> - F 物件適合欄位間比較、原子加減等操作。
 
 ### 排序與分頁
 ```python
