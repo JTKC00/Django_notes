@@ -394,9 +394,42 @@ def product_list(request):
 </html>
 ```
 
+
 **說明**：
 - 使用 `Paginator` 實現分頁。
 - 透過 GET 參數實現價格篩選。
+
+---
+
+### 補充：Django 模板中 `{{ }}` 的物件屬性存取
+
+在 Django 模板中，`{{ obj1.obj2.field }}` 這種語法用於存取巢狀物件的屬性或關聯欄位。
+
+- **語法結構**：
+  - `{{ object1.object2.field }}`
+    - `object1`：外層物件（如查詢集中的一筆資料）。
+    - `object2`：object1 的一個屬性，通常是 ForeignKey 關聯對象。
+    - `field`：object2 的欄位或屬性。
+
+- **範例**：
+  - 假設有訂單模型 `Order`，其中 `user_id` 是指向 `User` 的 ForeignKey：
+    ```python
+    class Order(models.Model):
+        user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+        ...
+    ```
+  - 在模板中：
+    ```django
+    {% for order in orders %}
+        {{ order.user_id.username }}
+    {% endfor %}
+    ```
+    - 這裡 `order.user_id` 取得關聯的 User 物件，`username` 為 User 的欄位。
+
+> **總結**：
+> - `{{ a.b.c }}` 會依序取得 a 的 b 屬性，再取 b 的 c 屬性。
+> - 常用於 ForeignKey、多層巢狀物件的資料顯示。
+> - 若屬性不存在或為 None，Django 會自動顯示空字串。
 
 ---
 
