@@ -136,14 +136,14 @@ Django Settings 是用於配置 Django 項目行為的關鍵文件，位於 `set
 - **作用**：設置項目的默認語言。
 - **示例**：
   ```python
-  LANGUAGE_CODE = 'zh-hant'  # 繁體中文
+  LANGUAGE_CODE = 'zh-hant'  # 繁體中文 /'en-us' 
   ```
 
 ### 6.2 `TIME_ZONE`
 - **作用**：設置項目的時區。
 - **示例**：
   ```python
-  TIME_ZONE = 'Asia/Taipei'
+  TIME_ZONE = 'Asia/Hong_Kong'
   ```
 
 ## 7. 自定義設置

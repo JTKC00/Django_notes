@@ -46,19 +46,125 @@ Django URL 路由是 Django 網頁框架的核心組成部分，負責將 URL �
     ```
 - **最佳實踐**：每個應用程式應有自己的 `urls.py` 文件，並在項目的主 `urls.py` 中包含。
 
-## 6. URL 參數與路徑轉換器
-- **捕獲參數**：使用尖括號 `< >` 捕獲 URL 參數。
+
+## 6. URL 參數、路徑轉換器與查詢參數
+- **捕獲參數**：使用尖括號 `< >` 捕獲 URL 路徑中的參數。
   - 範例：`<int:year>/<str:month>/`
 - **自定義路徑轉換器**：開發者可為特定模式定義自訂轉換器。
   - 範例：用於四位數年份的轉換器。
 - **正則表達式**：對於更複雜的模式，使用 `re_path()` 搭配正則表達式。
   - 範例：`re_path(r'^articles/(?P<year>[0-9]{4})/$', views.articles_by_year)`
 
-## 7. URL 命名空間
-- **目的**：避免應用程式之間的名稱衝突。
-- **語法**：在 `include()` 中使用 `namespace` 參數。
-  - 範例：`path('blog/', include('blog.urls', namespace='blog'))`
-- **用法**：使用命名空間引用命名 URL，例如 `{% url 'blog:article_detail' article_id=1 %}`
+### RESTful 路徑參數與查詢參數
+- **路徑參數**：常見於 RESTful API，例如 `/resources/<int:id>/`，直接在 URL 路徑中指定資源。
+  - 範例：`/books/123/` 會由 `path('books/<int:book_id>/', ...)` 捕獲 `book_id=123`。
+- **查詢參數（Query Params）**：以 `?key=value` 形式出現在 URL 結尾，常用於過濾、搜尋、分頁等。
+  - 範例：`/resources/query/?type=pdf&page=2`
+  - Django 取得查詢參數：`request.GET.get('type')`、`request.GET.get('page')`
+
+#### 綜合範例
+假設有一個 API 路徑 `/resources/query/<str:category>/`，同時支援查詢參數：
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('resources/query/<str:category>/', views.resource_query, name='resource_query'),
+]
+```
+對應視圖：
+```python
+def resource_query(request, category):
+    filetype = request.GET.get('type')
+    page = request.GET.get('page', 1)
+    # category 來自路徑, filetype/page 來自查詢參數
+    ...
+```
+呼叫範例：
+```
+/resources/query/book/?type=pdf&page=2
+```
+> **說明：**
+> - 路徑參數適合標識資源主體（如 id、分類），查詢參數適合過濾、排序、分頁等附加條件。
+
+
+## 7. URL 命名空間（namespace）教學
+
+### 不用 namespace 的情況
+如果沒有使用 namespace，app 的 `urls.py` 不設 `app_name`，主專案的 `urls.py` 也不指定 `namespace`：
+
+**blog/urls.py**
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('article/<int:article_id>/', views.article_detail, name='article_detail'),
+]
+```
+
+**project/urls.py**
+```python
+from django.urls import path, include
+
+urlpatterns = [
+    path('blog/', include('blog.urls')),
+]
+```
+
+**模板或反向解析**
+```django
+{% url 'article_detail' article_id=1 %}
+```
+```python
+from django.urls import reverse
+url = reverse('article_detail', args=[1])
+```
+
+> **缺點**：如果多個 app 都有 `article_detail` 這個 name，會發生名稱衝突，Django 只會解析到第一個註冊的。
+
+---
+
+### 使用 namespace 的情況
+使用 namespace 可避免名稱衝突，推薦用於多 app 專案。
+
+1. **在 app 的 `urls.py` 中設置 `app_name`**：
+   ```python
+   # blog/urls.py
+   from django.urls import path
+   from . import views
+
+   app_name = 'blog'
+
+   urlpatterns = [
+       path('article/<int:article_id>/', views.article_detail, name='article_detail'),
+   ]
+   ```
+
+2. **在主專案的 `urls.py` 中 include 並指定 namespace**：
+   ```python
+   # project/urls.py
+   from django.urls import path, include
+
+   urlpatterns = [
+       path('blog/', include('blog.urls', namespace='blog')),
+   ]
+   ```
+
+3. **在模板中使用命名空間呼叫 URL**：
+   ```django
+   {% url 'blog:article_detail' article_id=1 %}
+   ```
+
+4. **在視圖或其他地方反向解析**：
+   ```python
+   from django.urls import reverse
+   url = reverse('blog:article_detail', args=[1])
+   ```
+
+> **補充說明：**
+> - `app_name` 必須設在 app 的 `urls.py`，否則 namespace 會報錯。
+> - 使用命名空間可讓大型專案的 URL 管理更清晰。
 
 ## 8. URL 路由最佳實踐
 - **保持 URL 乾淨且易讀**：使用有意義的名稱，避免不必要的參數。
