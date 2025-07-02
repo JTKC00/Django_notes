@@ -155,8 +155,8 @@ Django 是一個基於 Python 的高級 Web 框架，以其高效、安全和可
 ## 12. 國際化和本地化
 - 在 `settings.py` 中配置：
   ```python
-  LANGUAGE_CODE = 'zh-hant'  # 繁體中文
-  TIME_ZONE = 'Asia/Taipei'
+  LANGUAGE_CODE = 'zh-hant'  # 繁體中文 /'en-us' English
+  TIME_ZONE = 'Asia//Hong_Kong'
   USE_I18N = True
   USE_TZ = True
   ```
