@@ -1,0 +1,363 @@
+# Django Function-Based View (FBV) 詳細筆記
+
+## 課程目標
+- 理解 Django Function-Based View 的基本概念與使用場景。
+- 學會撰寫 FBV 來處理 HTTP 請求與回應。
+- 掌握常見 FBV 應用，如表單處理、資料庫操作與模板渲染。
+- 提供實用範例與問題解析，幫助學員解決實際開發中的問題。
+
+## 筆記結構
+1. **FBV 簡介**
+2. **FBV 的工作原理**
+3. **撰寫 FBV 的基本步驟**
+4. **常見應用場景與範例**
+5. **進階技巧與最佳實踐**
+6. **常見問題與解決方案**
+7. **學習資源與練習建議**
+
+---
+
+## 1. FBV 簡介
+
+### 什麼是 Function-Based View？
+- **定義**：FBV 是 Django 中基於函數的視圖，是一種用 Python 函數來處理 HTTP 請求並返回 HTTP 回應的方式。
+- **與 Class-Based View (CBV) 的比較**：
+  - **FBV**：簡單、直接，適合小型專案或邏輯清晰的視圖。
+  - **CBV**：基於類，適合複雜邏輯或需要重用的場景。
+- **使用場景**：
+  - 簡單的頁面渲染。
+  - 表單提交與處理。
+  - 基本的 CRUD 操作（創建、讀取、更新、刪除）。
+
+### 為什麼學習 FBV？
+- **易學易用**：語法直觀，適合 Django 初學者。
+- **靈活性**：可以自由控制視圖邏輯，無需遵循 CBV 的結構。
+- **廣泛應用**：許多現有 Django 專案仍以 FBV 為主。
+
+---
+
+## 2. FBV 的工作原理
+
+### HTTP 請求與回應
+- **請求 (Request)**：客戶端發送的 HTTP 請求，包含方法（GET、POST 等）、表單數據、URL 參數等。
+- **回應 (Response)**：伺服器返回的內容，通常是 HTML 頁面、JSON 數據或重定向。
+
+### FBV 的核心組成
+- **輸入**：每個 FBV 接受一個 `HttpRequest` 物件作為參數。
+- **處理**：函數內處理業務邏輯，如查詢資料庫、處理表單等。
+- **輸出**：返回一個 `HttpResponse` 物件或其子類（如 `JsonResponse`、`HttpResponseRedirect`）。
+
+### 基本流程
+1. 用戶透過瀏覽器發送請求。
+2. Django 的 URL 分發器根據 `urls.py` 找到對應的 FBV。
+3. FBV 執行邏輯，生成回應。
+4. 回應返回給用戶。
+
+---
+
+## 3. 撰寫 FBV 的基本步驟
+
+### 步驟一：定義視圖函數
+- 在 `views.py` 中定義一個函數，接受 `request` 參數。
+- 使用 Django 提供的工具（如 `render`、`HttpResponse`）生成回應。
+
+```python
+from django.http import HttpResponse
+
+def my_view(request):
+    return HttpResponse("Hello, Django!")
+```
+
+### 步驟二：配置 URL 路由
+- 在 `urls.py` 中將 URL 路徑映射到視圖函數。
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('hello/', views.my_view, name='my_view'),
+]
+```
+
+### 步驟三：測試與部署
+- 運行 `python manage.py runserver`。
+- 訪問 `http://127.0.0.1:8000/hello/`，檢查是否顯示 "Hello, Django!"。
+
+---
+
+## 4. 常見應用場景與範例
+
+以下是 FBV 的典型應用場景，包含完整程式碼與說明。
+
+### 範例 1：渲染模板
+**目標**：顯示一個簡單的 HTML 頁面。
+
+1. **創建模板** (`templates/index.html`):
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>Hello, {{ name }}!</h1>
+</body>
+</html>
+```
+
+2. **撰寫視圖** (`views.py`):
+```python
+from django.shortcuts import render
+
+def index(request):
+    context = {'name': 'Django Learner'}
+    return render(request, 'index.html', context)
+```
+
+3. **配置 URL** (`urls.py`):
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+]
+```
+
+**說明**：
+- `render` 函數將模板與上下文數據結合，生成最終的 HTML。
+- `context` 是一個字典，傳遞給模板的變數。
+
+---
+
+### 範例 2：處理 GET 與 POST 請求
+**目標**：創建一個簡單的表單，提交後顯示用戶輸入。
+
+1. **創建模板** (`templates/form.html`):
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Example</title>
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Enter your name">
+        <button type="submit">Submit</button>
+    </form>
+    {% if username %}
+        <h3>Hello, {{ username }}!</h3>
+    {% endif %}
+</body>
+</html>
+```
+
+2. **撰寫視圖** (`views.py`):
+```python
+from django.shortcuts import render
+
+def form_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        return render(request, 'form.html', {'username': username})
+    return render(request, 'form.html')
+```
+
+3. **配置 URL** (`urls.py`):
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('form/', views.form_view, name='form_view'),
+]
+```
+
+**說明**：
+- `request.method` 判斷請求類型。
+- `request.POST.get('username')` 獲取表單數據。
+- `{% csrf_token %}` 防止跨站請求偽造攻擊。
+
+---
+
+### 範例 3：與模型交互（CRUD）
+**目標**：實現一個簡單的待辦事項清單（Todo List）。
+
+1. **定義模型** (`models.py`):
+```python
+from django.db import models
+
+class Todo(models.Model):
+    title = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+```
+
+2. **創建模板** (`templates/todos.html`):
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo List</title>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="New Todo">
+        <button type="submit">Add</button>
+    </form>
+    <ul>
+        {% for todo in todos %}
+            <li>{{ todo.title }} ({{ todo.created_at }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+
+3. **撰寫視圖** (`views.py`):
+```python
+from django.shortcuts import render
+from .models import Todo
+
+def todo_list(request):
+    todos = Todo.objects.all()
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        if title:
+            Todo.objects.create(title=title)
+    return render(request, 'todos.html', {'todos': todos})
+```
+
+4. **配置 URL** (`urls.py`):
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('todos/', views.todo_list, name='todo_list'),
+]
+```
+
+**說明**：
+- 使用 `Todo.objects.all()` 查詢所有待辦事項。
+- `Todo.objects.create()` 創建新記錄。
+- 記得運行 `python manage.py makemigrations` 和 `python manage.py migrate`。
+
+---
+
+## 5. 進階技巧與最佳實踐
+
+### 技巧 1：使用 Django 表單
+- 取代手動處理表單數據，使用 `forms.py` 定義表單，提升安全性與可維護性。
+
+```python
+# forms.py
+from django import forms
+
+class TodoForm(forms.Form):
+    title = forms.CharField(max_length=100, required=True)
+
+# views.py
+from django.shortcuts import render
+from .forms import TodoForm
+from .models import Todo
+
+def todo_list(request):
+    form = TodoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        Todo.objects.create(title=form.cleaned_data['title'])
+    todos = Todo.objects.all()
+    return render(request, 'todos.html', {'todos': todos, 'form': form})
+
+# templates/todos.html
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add</button>
+</form>
+```
+
+### 技巧 2：錯誤處理
+- 為視圖添加異常處理，防止程式崩潰。
+
+```python
+from django.http import HttpResponseServerError
+
+def my_view(request):
+    try:
+        # 可能失敗的程式碼
+        data = some_function()
+        return render(request, 'template.html', {'data': data})
+    except Exception as e:
+        return HttpResponseServerError(f"Error: {str(e)}")
+```
+
+### 技巧 3：使用裝飾器
+- Django 提供多種裝飾器來控制視圖行為。
+
+```python
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def secret_view(request):
+    return HttpResponse("This is a secret page!")
+```
+
+### 最佳實踐
+- **保持視圖簡潔**：將複雜邏輯移到模型或輔助函數中。
+- **使用上下文管理器**：處理檔案或資料庫操作時，使用 `with` 語句。
+- **遵循 DRY 原則**：避免重複程式碼，使用函數或模板繼承。
+- **安全性優先**：始終使用 `{% csrf_token %}`，並驗證表單數據。
+
+---
+
+## 6. 常見問題與解決方案
+
+### 問題 1：模板未正確渲染
+**症狀**：訪問頁面時顯示 404 或空白頁面。
+**解決方案**：
+- 檢查 `settings.py` 中的 `TEMPLATES` 設置，確保 `DIRS` 包含模板目錄。
+- 確認模板檔案路徑正確。
+- 使用 `python manage.py collectstatic`（若使用靜態檔案）。
+
+### 問題 2：POST 請求返回 403 Forbidden
+**症狀**：提交表單時出現 403 錯誤。
+**解決方案**：
+- 確保模板中包含 `{% csrf_token %}`。
+- 檢查 `settings.py` 中的 `CSRF_TRUSTED_ORIGINS`（若部署到生產環境）。
+
+### 問題 3：資料庫查詢無效
+**症狀**：視圖未顯示預期的資料。
+**解決方案**：
+- 確認模型已正確定義並遷移（`makemigrations` 和 `migrate`）。
+- 使用 Django Shell (`python manage.py shell`) 測試查詢。
+- 檢查視圖中的查詢邏輯，如 `filter()` 或 `get()`。
+
+---
+
+## 7. 學習資源與練習建議
+
+### 推薦資源
+- **官方文件**：Django 官方文檔（https://docs.djangoproject.com/）是學習 FBV 的最佳資源。
+- **書籍**：*Django for Beginners* by William S. Vincent。
+- **線上課程**：如 Udemy 的 Django 課程或 freeCodeCamp 的 Django 教程。
+- **社群**：Stack Overflow、Reddit 的 r/django。
+
+### 練習建議
+1. **基礎練習**：創建一個簡單的個人博客，包含文章列表與表單提交功能。
+2. **進階挑戰**：實現一個帶有用戶認證（登入/註冊）的待辦事項應用。
+3. **專案實戰**：開發一個小型電商網站，包含產品展示與購物車功能。
+4. **Debug 訓練**：故意引入錯誤（如缺少 `csrf_token`），然後修復並記錄過程。
+
+---
+
+## 總結
+- **FBV 是 Django 的核心組件**，簡單且靈活，適合初學者與小型專案。
+- **關鍵技能**：掌握 HTTP 請求處理、模板渲染、表單處理與資料庫操作。
+- **持續學習**：透過實作專案與閱讀源碼，逐步過渡到 CBV 或更高級功能。
