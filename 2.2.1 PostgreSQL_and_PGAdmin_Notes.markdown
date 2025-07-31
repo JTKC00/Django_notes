@@ -1,0 +1,464 @@
+# PostgreSQL 及 PGAdmin 教學筆記
+
+## 1. PostgreSQL 簡介
+PostgreSQL 是一個功能強大的開源關聯式資料庫管理系統，以其可靠性、功能豐富性和標準符合性而聞名。它支援進階 SQL 功能、JSON 資料類型、全文搜尋等，是 Django 專案的理想選擇。
+
+### 1.1 PostgreSQL 的優勢
+- **ACID 合規性**：確保資料一致性和可靠性
+- **豐富的資料類型**：支援 JSON、陣列、地理空間資料等
+- **強大的查詢功能**：支援複雜查詢、窗口函數、CTE 等
+- **擴展性**：支援自定義函數、觸發器、擴展模組
+- **跨平台**：支援 Windows、macOS、Linux
+- **與 Django 深度整合**：Django 官方推薦的資料庫
+
+## 2. PostgreSQL 安裝
+
+### 2.1 macOS 安裝
+#### 方法 1：使用 Homebrew（推薦）
+```bash
+# 安裝 Homebrew（如果還沒安裝）
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 安裝 PostgreSQL
+brew install postgresql@15
+
+# 啟動服務
+brew services start postgresql@15
+
+# 設定環境變數（加入到 ~/.zshrc 或 ~/.bash_profile）
+echo 'export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+#### 方法 2：使用官方安裝程式
+1. 前往 [PostgreSQL 官網](https://www.postgresql.org/download/macos/)
+2. 下載 macOS 安裝程式
+3. 執行安裝程式，按照指示完成安裝
+
+### 2.2 Windows 安裝
+1. 前往 [PostgreSQL 官網](https://www.postgresql.org/download/windows/)
+2. 下載 Windows 安裝程式
+3. 執行安裝程式，設定：
+   - 資料庫超級使用者密碼
+   - 連接埠（預設 5432）
+   - 語言環境
+
+### 2.3 Linux (Ubuntu/Debian) 安裝
+```bash
+# 更新套件列表
+sudo apt update
+
+# 安裝 PostgreSQL
+sudo apt install postgresql postgresql-contrib
+
+# 啟動服務
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+## 3. PostgreSQL 基本設定
+
+### 3.1 建立資料庫使用者
+```bash
+# 切換到 postgres 使用者
+sudo -u postgres psql
+
+# 在 PostgreSQL 命令列中執行
+CREATE USER myuser WITH PASSWORD 'mypassword';
+CREATE DATABASE mydatabase OWNER myuser;
+GRANT ALL PRIVILEGES ON DATABASE mydatabase TO myuser;
+
+# 退出
+\q
+```
+
+### 3.2 設定連線權限
+編輯 `pg_hba.conf` 檔案（通常在 `/etc/postgresql/版本/main/` 或 `/usr/local/var/postgres/`）：
+```
+# 允許本地連線
+local   all             all                                     md5
+host    all             all             127.0.0.1/32            md5
+```
+
+### 3.3 重啟 PostgreSQL 服務
+```bash
+# macOS (Homebrew)
+brew services restart postgresql@15
+
+# Linux
+sudo systemctl restart postgresql
+
+# Windows
+# 使用服務管理員重啟 PostgreSQL 服務
+```
+
+## 4. PGAdmin 安裝與設定
+
+### 4.1 PGAdmin 簡介
+PGAdmin 是 PostgreSQL 的官方圖形化管理工具，提供直觀的介面來管理資料庫、執行查詢、監控效能等。
+
+### 4.2 安裝 PGAdmin
+
+#### macOS 安裝
+```bash
+# 使用 Homebrew Cask
+brew install --cask pgadmin4
+
+# 或從官網下載
+# https://www.pgadmin.org/download/pgadmin-4-macos/
+```
+
+#### Windows 安裝
+1. 前往 [PGAdmin 官網](https://www.pgadmin.org/download/pgadmin-4-windows/)
+2. 下載 Windows 安裝程式
+3. 執行安裝程式完成安裝
+
+#### Linux 安裝
+```bash
+# Ubuntu/Debian
+sudo apt install pgadmin4
+
+# 或使用官方 APT 倉庫
+curl https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo apt-key add
+sudo sh -c 'echo "deb https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list'
+sudo apt update
+sudo apt install pgadmin4
+```
+
+### 4.3 首次設定 PGAdmin
+1. **啟動 PGAdmin**
+   - 開啟 PGAdmin 應用程式
+   - 設定主密碼（用於保護儲存的密碼）
+
+2. **建立伺服器連線**
+   - 右鍵點擊「Servers」→「Create」→「Server」
+   - 設定連線資訊：
+     ```
+     General 標籤：
+     - Name: Local PostgreSQL
+     
+     Connection 標籤：
+     - Host name/address: localhost
+     - Port: 5432
+     - Maintenance database: postgres
+     - Username: postgres（或您建立的使用者）
+     - Password: 您設定的密碼
+     ```
+
+3. **儲存並連線**
+   - 勾選「Save password」
+   - 點擊「Save」建立連線
+
+### 4.4 使用 PGAdmin 建立資料庫
+
+建立伺服器連線後，您可以使用 PGAdmin 的圖形介面來建立新的資料庫：
+
+1. **展開伺服器節點**
+   - 在左側導航欄中，展開您剛建立的伺服器連線
+
+2. **建立新資料庫**
+   - 右鍵點擊「Databases」
+   - 選擇「Create」→「Database...」
+
+3. **設定資料庫基本資訊**
+   - **General 標籤**：
+     - Database：輸入資料庫名稱（例如：mydatabase）
+     - Owner：選擇資料庫擁有者（預設為 postgres）
+     - Comment：可選的資料庫描述
+   
+4. **進階設定**
+   - **Definition 標籤**：
+     - Encoding：選擇字元編碼（建議使用 UTF8）
+     - Tablespace：選擇表格空間（通常使用 pg_default）
+     - Collation：排序規則（例如：en_US.UTF-8 或 C）
+     - Character type：字元類型（例如：en_US.UTF-8 或 C）
+     - Connection limit：連線限制（-1 表示無限制）
+
+5. **權限設定**
+   - **Security 標籤**：
+     - 可以設定特定使用者的存取權限
+     - 預設情況下，擁有者會有完整權限
+     - **Privileges 區域**：
+       - Grantee: 被授權的使用者（如 Public、postgres）
+       - Privileges: 權限類型（如 TEMPORARY, CONNECT, ALL）
+       - Grantor: 授權者（通常是 postgres）
+
+6. **完成建立**
+   - 檢查所有設定無誤後
+   - 點擊「Save」建立資料庫
+
+#### 範例：建立 Django 專案資料庫
+```
+General 標籤：
+- Database: myproject_db
+- Owner: postgres
+
+Definition 標籤：
+- Encoding: UTF8
+- Tablespace: pg_default
+- Collation: en_US.UTF-8
+- Character type: en_US.UTF-8
+
+Security 標籤：
+- Grantee: Public (允許公共存取)
+  - Privileges: TEMPORARY, CONNECT
+  - Grantor: postgres
+- Grantee: postgres (資料庫擁有者)
+  - Privileges: ALL
+  - Grantor: postgres
+```
+
+#### 驗證資料庫建立
+建立完成後，您可以：
+- 在左側導航欄中看到新建立的資料庫
+- 展開資料庫節點查看其結構（Schemas、Tables 等）
+- 右鍵點擊資料庫選擇「Properties」查看詳細設定
+
+## 5. PostgreSQL 基本操作
+
+### 5.1 命令列操作
+```bash
+# 連線到資料庫
+psql -h localhost -U myuser -d mydatabase
+
+# 常用命令
+\l          # 列出所有資料庫
+\c dbname   # 切換資料庫
+\dt         # 列出當前資料庫的所有表格
+\d table    # 顯示表格結構
+\q          # 退出
+```
+
+### 5.2 基本 SQL 操作
+```sql
+-- 建立資料庫
+CREATE DATABASE myproject;
+
+-- 建立表格
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入資料
+INSERT INTO users (username, email) VALUES ('john_doe', 'john@example.com');
+
+-- 查詢資料
+SELECT * FROM users;
+
+-- 更新資料
+UPDATE users SET email = 'newemail@example.com' WHERE id = 1;
+
+-- 刪除資料
+DELETE FROM users WHERE id = 1;
+```
+
+## 6. Django 與 PostgreSQL 整合
+
+### 6.1 安裝 PostgreSQL 適配器
+```bash
+# 安裝 psycopg2（推薦）
+pip install psycopg2-binary
+
+# 或安裝完整版本（需要編譯）
+pip install psycopg2
+```
+
+### 6.2 Django Settings 設定
+在 `settings.py` 中配置 PostgreSQL：
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mydatabase',
+        'USER': 'myuser',
+        'PASSWORD': 'mypassword',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'OPTIONS': {
+            'client_encoding': 'UTF8',
+        },
+    }
+}
+```
+
+### 6.3 使用環境變數（推薦）
+```python
+# settings.py
+import os
+from pathlib import Path
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'mydatabase'),
+        'USER': os.getenv('DB_USER', 'myuser'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'mypassword'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+    }
+}
+```
+
+對應的 `.env` 檔案：
+```env
+DB_NAME=mydatabase
+DB_USER=myuser
+DB_PASSWORD=mypassword
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+### 6.4 執行遷移
+```bash
+# 建立遷移檔案
+python manage.py makemigrations
+
+# 執行遷移
+python manage.py migrate
+
+# 建立超級使用者
+python manage.py createsuperuser
+```
+
+## 7. 進階設定與最佳實踐
+
+### 7.1 效能調校
+在 `postgresql.conf` 中調整設定：
+```conf
+# 記憶體設定
+shared_buffers = 256MB
+effective_cache_size = 1GB
+
+# 連線設定
+max_connections = 100
+
+# 日誌設定
+log_statement = 'all'
+log_duration = on
+```
+
+### 7.2 備份與還原
+```bash
+# 備份資料庫
+pg_dump -h localhost -U myuser mydatabase > backup.sql
+
+# 還原資料庫
+psql -h localhost -U myuser mydatabase < backup.sql
+
+# 備份為自訂格式（推薦）
+pg_dump -h localhost -U myuser -Fc mydatabase > backup.dump
+
+# 還原自訂格式
+pg_restore -h localhost -U myuser -d mydatabase backup.dump
+```
+
+### 7.3 安全性設定
+```python
+# Django settings.py 安全設定
+DATABASES = {
+    'default': {
+        # ...其他設定
+        'OPTIONS': {
+            'sslmode': 'require',  # 強制使用 SSL
+        },
+        'CONN_MAX_AGE': 60,  # 連線池設定
+    }
+}
+```
+
+## 8. 常見問題與解決方案
+
+### 8.1 連線問題
+**問題**：`FATAL: role "username" does not exist`
+**解決方案**：
+```bash
+# 建立使用者
+sudo -u postgres createuser --interactive
+```
+
+**問題**：`FATAL: database "dbname" does not exist`
+**解決方案**：
+```bash
+# 建立資料庫
+sudo -u postgres createdb dbname
+```
+
+### 8.2 權限問題
+**問題**：`permission denied for relation django_migrations`
+**解決方案**：
+```sql
+-- 授權給使用者
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myuser;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO myuser;
+```
+
+### 8.3 編碼問題
+**問題**：中文字元顯示異常
+**解決方案**：
+```sql
+-- 建立支援 UTF-8 的資料庫
+CREATE DATABASE mydatabase 
+WITH ENCODING 'UTF8' 
+LC_COLLATE='en_US.UTF-8' 
+LC_CTYPE='en_US.UTF-8';
+```
+
+## 9. PGAdmin 進階功能
+
+### 9.1 查詢工具
+- **SQL 編輯器**：編寫和執行 SQL 查詢
+- **視覺化查詢建構器**：圖形化建立查詢
+- **查詢歷史**：查看和重複執行歷史查詢
+
+### 9.2 資料庫監控
+- **伺服器活動**：監控連線和查詢
+- **效能儀表板**：查看系統效能指標
+- **日誌檢視器**：檢視 PostgreSQL 日誌
+
+### 9.3 資料匯入/匯出
+- **匯入 CSV**：從 CSV 檔案匯入資料
+- **匯出資料**：將查詢結果匯出為各種格式
+- **備份/還原**：使用圖形介面執行備份和還原
+
+## 10. 開發工作流程建議
+
+### 10.1 本地開發環境設定
+1. 安裝 PostgreSQL 和 PGAdmin
+2. 建立開發用資料庫和使用者
+3. 設定 Django 連線
+4. 使用遷移管理資料庫結構
+
+### 10.2 版本控制最佳實踐
+- 將資料庫設定放在環境變數中
+- 版本控制遷移檔案
+- 使用不同的資料庫進行開發/測試/生產
+
+### 10.3 團隊協作
+- 統一資料庫版本和設定
+- 共享遷移檔案
+- 使用種子資料進行測試
+
+## 11. 學習資源
+
+### 11.1 官方文件
+- [PostgreSQL 官方文件](https://www.postgresql.org/docs/)
+- [PGAdmin 官方文件](https://www.pgadmin.org/docs/)
+- [Django PostgreSQL 整合](https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes)
+
+### 11.2 推薦工具
+- **DBeaver**：跨平台資料庫管理工具
+- **DataGrip**：JetBrains 的專業資料庫 IDE
+- **PostgreSQL Workbench**：輕量級管理工具
+
+## 12. 總結
+
+PostgreSQL 與 PGAdmin 的組合為 Django 開發提供了強大的資料庫解決方案。通過：
+- 正確安裝和設定 PostgreSQL
+- 使用 PGAdmin 進行視覺化管理
+- 在 Django 中正確配置資料庫連線
+- 遵循最佳實踐進行開發
+
+您可以建立一個穩定、高效且可擴展的資料庫架構。記住定期備份資料、監控效能，並保持資料庫和工具的更新。
