@@ -44,6 +44,57 @@ virtualenvwrapper 是一個基於 Python 的 virtualenv 工具的擴展包，旨
    ```
    如果顯示版本信息，則安裝成功。
 
+### 2.2 virtualenvwrapper lazy 配置（推薦）
+
+#### 什麼是 virtualenvwrapper lazy？
+virtualenvwrapper lazy 是 virtualenvwrapper 的延遲加載版本，它可以顯著提升 shell 啟動速度。傳統的 virtualenvwrapper 在每次啟動 shell 時都會執行所有初始化腳本，而 lazy 版本只在第一次使用相關命令時才進行初始化。
+
+#### 優勢
+- **快速啟動**：shell 啟動時間大幅縮短，特別是對於經常開啟新終端的用戶。
+- **按需加載**：只有在實際使用 virtualenvwrapper 命令時才執行初始化。
+- **相同功能**：提供與標準版本完全相同的功能和命令。
+- **更好的用戶體驗**：減少 shell 啟動時的等待時間。
+
+#### 配置 lazy 版本
+1. **修改 shell 配置文件**：
+   將之前的配置替換為：
+   ```bash
+   export WORKON_HOME=$HOME/.virtualenvs  # 指定虛擬環境存儲目錄
+   export PROJECT_HOME=$HOME/Devel        # 可選：指定項目目錄
+   source /usr/local/bin/virtualenvwrapper_lazy.sh  # 使用 lazy 版本
+   ```
+
+2. **重新加載配置**：
+   ```bash
+   source ~/.zshrc  # 或 ~/.bashrc，根據你使用的 shell
+   ```
+
+3. **驗證 lazy 配置**：
+   第一次運行任何 virtualenvwrapper 命令時，會看到初始化信息：
+   ```bash
+   workon
+   # virtualenvwrapper.user_scripts creating /Users/username/.virtualenvs/premkproject
+   # virtualenvwrapper.user_scripts creating /Users/username/.virtualenvs/postmkproject
+   # ...
+   ```
+
+#### lazy vs 標準版本比較
+| 特性 | 標準版本 | Lazy 版本 |
+|------|----------|-----------|
+| Shell 啟動速度 | 較慢（每次都初始化） | 快速（延遲初始化） |
+| 功能完整性 | 完整 | 完整 |
+| 記憶體使用 | 啟動時就占用 | 按需占用 |
+| 適用場景 | 頻繁使用虛擬環境 | 偶爾使用或注重啟動速度 |
+
+#### 效能提升示例
+```bash
+# 測試 shell 啟動時間
+time zsh -i -c exit
+
+# 使用標準版本：通常 > 1 秒
+# 使用 lazy 版本：通常 < 0.5 秒
+```
+
 ---
 
 ## 3. 常用命令
@@ -174,6 +225,22 @@ mkvirtualenv --install <package> myproject
   - 為每個項目創建獨立的虛擬環境。
   - 使用 `pip freeze > requirements.txt` 記錄依賴，並在其他環境中使用 `pip install -r requirements.txt` 還原。
 
+### 5.4 lazy 版本相關問題
+- **問題**：切換到 lazy 版本後，命令響應變慢。
+- **解決**：
+  - 第一次使用時會進行初始化，這是正常現象。
+  - 確保 `virtualenvwrapper_lazy.sh` 路徑正確。
+  - 清除舊的 shell 會話，重新啟動終端。
+
+- **問題**：lazy 版本初始化失敗。
+- **解決**：
+  - 檢查 `WORKON_HOME` 目錄是否存在且有寫入權限。
+  - 確認 Python 和 virtualenv 安裝正確。
+  - 嘗試手動運行一次標準版本進行初始化：
+    ```bash
+    source /usr/local/bin/virtualenvwrapper.sh
+    ```
+
 ---
 
 ## 6. 最佳實踐
@@ -183,6 +250,8 @@ mkvirtualenv --install <package> myproject
 3. **清理無用環境**：定期使用 `rmvirtualenv` 刪除不再使用的虛擬環境。
 4. **使用版本控制**：將項目和 `requirements.txt` 提交到 Git，確保環境可重現。
 5. **結合 IDE**：在 PyCharm 或 VSCode 中配置虛擬環境，提升開發效率。
+6. **優先使用 lazy 版本**：建議使用 `virtualenvwrapper_lazy.sh` 來提升 shell 啟動速度，特別是在頻繁開啟新終端的工作流程中。
+7. **效能監控**：定期測試 shell 啟動時間，確保開發環境的響應速度。
 
 ---
 
@@ -199,6 +268,16 @@ mkvirtualenv --install <package> myproject
 1. 創建一個虛擬環境 `myapp`。
 2. 添加一個 `postactivate` 腳本，設置環境變量 `APP_ENV=development`。
 3. 激活環境並驗證變量是否生效。
+
+### 練習 3：配置 virtualenvwrapper lazy（推薦）
+1. 測量當前 shell 啟動時間：
+   ```bash
+   time zsh -i -c exit
+   ```
+2. 將配置從標準版本改為 lazy 版本。
+3. 重新測量啟動時間，比較效能差異。
+4. 使用 `workon` 命令驗證 lazy 初始化過程。
+5. 確認所有功能正常運作。
 
 ---
 
